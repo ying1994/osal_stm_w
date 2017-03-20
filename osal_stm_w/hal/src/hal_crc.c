@@ -203,6 +203,18 @@ UINT16 HalCRC16_CCITT(UINT16 uCRC16, UCHAR* pData, UINT16 uLen)
 }
 
 /**
+ * @brief 计算CRC16
+ * @param uCRC16 CRC16的初始值
+ * @param pData 输入数据指针
+ * @param uLen 输入数据长度
+ * @return UINT16 CRC校验结果
+ */
+UINT16 HalCRC16(UINT16 uCRC16, UCHAR* pData, UINT16 uLen)
+{
+    return HalCRC16_CCITT(uCRC16, pData, uLen);
+}
+
+/**
  * @brief 计算CRC32
  * @param uCRC16 CRC32的初始值
  * @param pData 输入数据指针

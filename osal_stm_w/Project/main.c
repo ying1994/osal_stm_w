@@ -22,7 +22,7 @@
 #if ENABLE_BOOTLOADER_CODE
 	#define VECT_TAB_OFFSET 0x0000
 #else
-	#define VECT_TAB_OFFSET 0x0000 //0xD000
+	#define VECT_TAB_OFFSET 0xD000
 #endif
 
 
@@ -42,31 +42,25 @@ static void showFrimwareVersion(void)
 	}
 	printf("\r\n");
 }
-/*
-static void timer(void)
-{
-	printf("HelloWorld!\r\n");
-}
-*/
+
+
 int main(void)
 {
 	__enable_irq(); 
 	SCB->VTOR = NVIC_VectTab_FLASH | VECT_TAB_OFFSET;
 	
 	HalCpuInit();
-	hal_rtc_init();
+	//hal_rtc_init();
 	hal_uart_getinstance(HAL_UART1)->init();
-	HalIwdgInit(5);
 	
 	showFrimwareVersion();
-	
-	//bd_timer_setShareTimer(timer, 1000);
 
 #if ENABLE_BOOTLOADER_CODE
 	/*TODO: Add Bootloader code here */
 	bootloader_init();
 #else
 	/*TODO: Add application code here */
+	HalIwdgInit(30);
 	application_init();
 #endif
 	/* run message task */

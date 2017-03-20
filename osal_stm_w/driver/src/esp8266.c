@@ -55,7 +55,6 @@ static void delay(UINT32 t)
 			__NOP();
 		HalIwdgFred();
 	}
-	//delay(t);
 }
 
 /**
@@ -82,7 +81,7 @@ static void OnComm(UCHAR data)
 }
 
 /**
- * @brief 
+ * @brief 等待接收
  * @param None
  * @retval 
  */
@@ -100,6 +99,20 @@ static BOOL WaitForRecive(void)
 	return FALSE;
 }
 
+/**
+ * @brief 等待接收
+ * @param None
+ * @retval 
+ */
+static BOOL WaitForReciveEx(UINT32 t)
+{
+	delay(t);
+	if (0 == m_uReadPriter)
+		return FALSE;
+	m_rxDataBuffer[m_uReadPriter] = '\0';
+	return TRUE;
+}
+
 #define ESP8266_SENDCMD_TIME_OUT 150
 /**
  * @brief 发送命令, 并校验返回数据是否正确
@@ -110,29 +123,30 @@ static BOOL WaitForRecive(void)
 static BOOL SendCmd(const char *cmd, const char *res)
 {
 	BOOL ret = FALSE;
-	UINT16 timeOut = 0;
+	//UINT16 timeOut = 0;
 	m_bTransEnable = FALSE;
 	
 	if ((NULL == m_hUart) || (NULL == cmd) || (NULL == res))
 		return FALSE;
+
 	m_uReadPriter = 0;
 	m_hUart->write((UCHAR*)cmd, strlen(cmd));	//写命令到网络设备
 	DBG(TRACE("send: %s\r\n", cmd));
 	
-	for (timeOut = 0; timeOut < ESP8266_SENDCMD_TIME_OUT; timeOut++)	//等待
+	//for (timeOut = 0; timeOut < ESP8266_SENDCMD_TIME_OUT; timeOut++)	//等待
 	{
-		if(WaitForRecive())	//数据接收完成
+		delay(4);//挂起等待
+		//if(WaitForRecive())	//数据接收完成
+		if(WaitForReciveEx(ESP8266_SENDCMD_TIME_OUT << 1))	//数据接收完成
 		{
 			DBG(TRACE("recv: %s\r\n", m_rxDataBuffer));
 			if(strstr((const char *)m_rxDataBuffer, (const char *)res) != NULL)	//如果检索到关键词
 			{
 				esp8266_ClrData();	//清空缓存
 				ret = TRUE;
-				break;
+				//break;
 			}
 		}
-		
-		delay(4);//挂起等待
 	}
 	
 	return ret;
