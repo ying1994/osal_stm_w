@@ -34,7 +34,7 @@ typedef enum _ESP8266_CONNST_STATUS
 {
 	ESP8266_CONNETED = 0,		/*!< 建立连接 */
 	ESP8266_CONNET_LOST,		/*!< 失去连接 */
-	ESP8266_CONNET_GETIP,		/*!< 获得IP */
+	ESP8266_CONNET_GETIP,		/*!< WIFI在线*/
 	ESP8266_CONNET_LOST_WIFI	/*!< 物理掉线 */
 }Esp8266ConnetStatus;
 

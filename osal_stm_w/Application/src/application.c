@@ -161,6 +161,7 @@ static void OnEsp8826MsgEvent(MsgTypeDef* pMsg)
 	}
 }
 
+//检查字符串参数合法性(不能全为0xff)
 BOOL checkParamStr(UCHAR* msg, UINT16 len)
 {
 	UINT16 i = 0;
@@ -171,6 +172,29 @@ BOOL checkParamStr(UCHAR* msg, UINT16 len)
     }
     return FALSE;
 }
+
+//检查Wifi状态
+static void taskForCheckWifiStage(void)
+{
+	g_uWifiState = esp8266_check();
+	switch (g_uWifiState)
+	{
+		case ESP8266_CONNET_GETIP: //连接Wifi
+			esp8266_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
+			break;
+		case ESP8266_CONNETED: //建立连接
+			esp8266_StartTransparent();
+			break;
+		case ESP8266_CONNET_LOST: //失去连接
+			esp8266_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
+			break;
+		default:				//物理掉线
+			esp8266_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
+			break;
+	}
+	DBG(TRACE("taskForCheckWifiStage Run: %d\r\n", g_uWifiState));
+}
+
 #endif //CFG_ESP8266	
 
 /**
@@ -188,6 +212,7 @@ void application_init(void)
 	hComm->init(hal_uart_getinstance(HAL_UART1));
 	hComm->add_rx_obser(OnDebugMsgEvent);
 	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT0);
+	
 #ifdef CFG_ESP8266	
 	//读取IP数据
 	HalFlashRead(WIFI_SSID_ADDR, g_aSsid, WIFI_SSID_SIZE);
@@ -242,7 +267,7 @@ void application_init(void)
 	}
 	
 	//ESP8266初始化
-	esp8266_Init(hal_uart_getinstance(HAL_UART5));//HAL_UART5
+	esp8266_Init(hal_uart_getinstance(HAL_UART2));
 	esp8266_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
 	esp8266_setIp(g_aLocalIP, g_aLocalGateway, g_aLocalMask);//设置IP
 	esp8266_setMac(g_aLocalMac);//设置MAC地址
@@ -258,6 +283,9 @@ void application_init(void)
 
 	osal_router_init(&m_hRouterInstance);
 	bd_updateunit_Init(&m_hUpdateInstance);
+	
+	//创建任务
+	osal_task_create(taskForCheckWifiStage, 0x300000);//检查Wifi连接状态 (约 30s)
 	
 }
 

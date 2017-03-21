@@ -404,12 +404,12 @@ UINT16 esp8266_write(UCHAR *pdata, UINT16 len)
 		return FALSE;
 	if (m_bTransEnable)
 	{
-		m_bTransEnable = FALSE;
+		//m_bTransEnable = FALSE;
 		//sprintf(cmd, "AT+CIPSEND\r\n");		//发送命令
 		//if(!SendCmd(cmd, ">"))			//收到‘>’时可以发送数据
 		//SendCmd(cmd, ">");
 		m_hUart->write(pdata, len);
-		m_bTransEnable = TRUE;
+		//m_bTransEnable = TRUE;
 		return len;
 	}
 	return 0;

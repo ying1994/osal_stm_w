@@ -162,30 +162,6 @@ BOOL osal_router_sendMsg(UINT8 uPortAddr, MsgTypeDef* pMsg)
 }
 
 /**
- * @brief 通讯结点心跳包发送计时器
- */
-static void OnRouterCommHandleTimer(void)
-{
-	//TODO: 在此添加握手心跳包通讯代码
-	//MsgTypeDef* pMsg = osal_router_getFreeMsgHandle();
-	//pMsg->uAddr = 0;
-	//pMsg->blockID = ROUTER_UNIT;
-	//pMsg->functionID = COMM_HANDLE;
-	//pMsg->opType = OP_STATUS;
-	//pMsg->len = 0;
-	
-	//osal_router_sendMsg(0, pMsg);
-}
-
-/**
- * @brief 通讯结点心跳计数器
- */
-static void OnRouterTimer(void)
-{
-	//TODO: 在此添加握手心跳包通讯代码
-}
-
-/**
  * @brief 设置结点地址
  * @param uAddr 本地结点地址
  * @return 返回本地结点地址
@@ -232,8 +208,6 @@ void osal_router_init(OSALRouterCBack_t* hRouterBase)
 		m_uAddress = uAddress;
 	TRACE("Device Address: %d\r\n", m_uAddress);
 		
-	HalSetShareTimer(OnRouterCommHandleTimer, 1000);//创建独立定时器用于发送心跳包
-	HalSetShareTimer(OnRouterTimer, 1000);//创建独立定时器监控结点心在线事件
 	m_hRouterInstance = hRouterBase;
 }
 
