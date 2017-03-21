@@ -47,7 +47,11 @@
 #define GET_APP_VERSION		0x0011 /*!< 获取应用程序版本号 */
 #define GET_BIOS_VERSION	0x0012 /*!< 获取BootLoader版本号 */
 #define GET_CHIP_ID			0x0013 /*!< 获取芯片ID */
-#define NET_MSG_TEST		0x0014 /*!< 消息测试 */
+#define NET_LOCAL_IP		0x0014 /*!< 本地IP、网关、掩码、MAC地址 */
+#define NET_SERVER_IP		0x0015 /*!< 服务器IP、端口、连接方式 */
+#define NET_WIFI_PARAM		0x0016 /*!< Wifi参数（SSID、PWD） */
+#define NET_WIFI_CONNET		0x0018 /*!< Wifi连接 */
+#define NET_MSG_TEST		0x0019 /*!< 消息测试 */
 
 /**
  * @}
