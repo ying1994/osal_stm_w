@@ -1,5 +1,5 @@
 /**
- * @file    esp8266.h
+ * @file    esp8266_client_client.c
  * @author  WSF
  * @version V1.0.0
  * @date    2016.03.15
@@ -14,12 +14,12 @@
  *
  */
 #include "stdafx.h"
-#include "esp8266.h"
+#include "esp8266_client.h"
 #include  "hal_defs.h"
 #include  "hal_types.h"
 
 
-#ifdef CFG_ESP8266
+#ifdef CFG_ESP8266_CLIENT
 
 
 /* 数据透传是否启动 */
@@ -57,7 +57,7 @@ static void delay(UINT32 t)
 	}
 }
 
-void esp8266_delay(UINT32 t)
+void esp8266_client_delay(UINT32 t)
 {
 	delay(t);
 }
@@ -148,7 +148,7 @@ static BOOL SendCmd(const char *cmd, const char *res)
 			DBG(TRACE("[SendCmd] recv: %s\r\n", m_rxDataBuffer));
 			if(strstr((const char *)m_rxDataBuffer, (const char *)res) != NULL)	//如果检索到关键词
 			{
-				esp8266_ClrData();	//清空缓存
+				esp8266_client_ClrData();	//清空缓存
 				ret = TRUE;
 				//break;
 			}
@@ -163,7 +163,7 @@ static BOOL SendCmd(const char *cmd, const char *res)
  * @param hUart:  Uart实例句柄
  * @retval None
  */
-void esp8266_Init(HALUartTypeDef* hUart)
+void esp8266_client_Init(HALUartTypeDef* hUart)
 {
 	if (NULL != hUart)
 	{
@@ -188,14 +188,14 @@ void esp8266_Init(HALUartTypeDef* hUart)
  * @param hUart:  Uart实例句柄
  * @retval None
  */
-void esp8266_DeInit(void)
+void esp8266_client_DeInit(void)
 {
 	if (NULL == m_hUart)
 		return;
 	
-	esp8266_StopTransparent();
-	esp8266_desconnet();
-	esp8266_desconnet_wifi();
+	esp8266_client_StopTransparent();
+	esp8266_client_desconnet();
+	esp8266_client_desconnet_wifi();
 	
 	HalGpioInit(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, HAL_GPIOMode_IN_FLOATING);
 	
@@ -209,14 +209,14 @@ void esp8266_DeInit(void)
  * @param passwd: 端口号
  * @retval: 连接成功返回TRUE, 失败返回FALSE
  */
-BOOL esp8266_connet_wifi(const UCHAR *ssid, const UCHAR *pwd)
+BOOL esp8266_client_connet_wifi(const UCHAR *ssid, const UCHAR *pwd)
 {
 	char cmd[256] = {0};
 	UINT16 uCnt = 0;
 	if ((NULL == m_hUart) || (NULL == ssid) || (NULL == pwd) || (strlen((const char*)ssid) == 0)  || (strlen((const char*)pwd) == 0))
 		return FALSE;
 	
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	//设置WiFi模式 1:station 2:softAP 3:softAP + station
 	uCnt = 0;
 	while ((!SendCmd("AT+CWMODE=1\r\n", "OK")) && (uCnt < ESP8266_SENDCMD_TRYCNT))
@@ -246,15 +246,15 @@ BOOL esp8266_connet_wifi(const UCHAR *ssid, const UCHAR *pwd)
 	sprintf(cmd, "AT+CWJAP=\"%s\",\"%s\"\r\n", ssid, pwd);	//<ssid>,<pwd>[,<bssid>]
 	m_hUart->write((UCHAR*)cmd, strlen(cmd));
 	//SendCmd(cmd, "OK");
-	DBG(TRACE("[esp8266_connet_wifi] send:%s\r\n", cmd));
+	DBG(TRACE("[esp8266_client_connet_wifi] send:%s\r\n", cmd));
 	delay(3500);
-	TRACE("[esp8266_connet_wifi] recv:%s\r\n", m_rxDataBuffer);
+	TRACE("[esp8266_client_connet_wifi] recv:%s\r\n", m_rxDataBuffer);
 	//if(strstr((const char *)m_rxDataBuffer, "OK"))			//获得IP
 	if(strstr((const char *)m_rxDataBuffer, "WIFI CONNECTED") == NULL)	//连接WIFI
 	{
 		return FALSE;
 	}
-	//if (esp8266_check() != ESP8266_CONNET_LOST_WIFI)//物理掉线
+	//if (esp8266_client_check() != ESP8266_CONNET_LOST_WIFI)//物理掉线
 	//	return FALSE;  
 	
 	//上电自动连接
@@ -276,9 +276,9 @@ BOOL esp8266_connet_wifi(const UCHAR *ssid, const UCHAR *pwd)
  * @param None
  * @retval: 连接成功返回TRUE, 失败返回FALSE
  */
-BOOL esp8266_desconnet_wifi(void)
+BOOL esp8266_client_desconnet_wifi(void)
 {
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	return SendCmd("AT+CWQAP\r\n", "OK"); 
 }
 
@@ -287,9 +287,9 @@ BOOL esp8266_desconnet_wifi(void)
  * @param None
  * @retval 网络连接返回TRUE, 未连接返回FALSE
  */
-BOOL esp8266_isWifiConnet(void)
+BOOL esp8266_client_isWifiConnet(void)
 {
-	return (esp8266_check() == ESP8266_CONNET_LOST_WIFI) ? FALSE : TRUE;
+	return (esp8266_client_check() == ESP8266_CONNET_LOST_WIFI) ? FALSE : TRUE;
 }
 
 /**
@@ -299,7 +299,7 @@ BOOL esp8266_isWifiConnet(void)
  * @param bTcp: 连接方式, TRUE: TCP连接, FALSE: UDB连接
  * @retval: 连接成功返回TRUE, 失败返回FALSE
  */
-BOOL esp8266_connet(const UCHAR *ip, UINT16 port, BOOL bTcp)
+BOOL esp8266_client_connet(const UCHAR *ip, UINT16 port, BOOL bTcp)
 {
 	BOOL bTrans = m_bTransEnable;
 	char cmd[256] = {0};
@@ -307,9 +307,9 @@ BOOL esp8266_connet(const UCHAR *ip, UINT16 port, BOOL bTcp)
 	
 	if ((NULL == m_hUart) || (NULL == ip) || (strlen((const char*)ip) == 0))
 		return FALSE;
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	
-	esp8266_desconnet();//断开原来的连接
+	esp8266_client_desconnet();//断开原来的连接
 	
 	m_bTcpTrans = bTcp;
 	
@@ -337,7 +337,7 @@ BOOL esp8266_connet(const UCHAR *ip, UINT16 port, BOOL bTcp)
 	//}
 	
 	if (bTrans)
-		esp8266_StartTransparent();
+		esp8266_client_StartTransparent();
 	
 	return FALSE;
 }
@@ -347,9 +347,9 @@ BOOL esp8266_connet(const UCHAR *ip, UINT16 port, BOOL bTcp)
  * @param None
  * @retval: 连接成功返回TRUE, 失败返回FALSE
  */
-BOOL esp8266_desconnet(void)
+BOOL esp8266_client_desconnet(void)
 {
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	return SendCmd("AT+CIPCLOSE\r\n", "OK");
 }
 
@@ -358,9 +358,9 @@ BOOL esp8266_desconnet(void)
  * @param None
  * @retval 网络连接返回TRUE, 未连接返回FALSE
  */
-BOOL esp8266_isConnet(void)
+BOOL esp8266_client_isConnet(void)
 {
-	return (esp8266_check() == ESP8266_CONNETED) ? TRUE : FALSE;
+	return (esp8266_client_check() == ESP8266_CONNETED) ? TRUE : FALSE;
 }
 
 /**
@@ -370,7 +370,7 @@ BOOL esp8266_isConnet(void)
  * @param netmask: 掩码地址
  * @retval: 设置成功返回TRUE, 失败返回FALSE
  */
-BOOL esp8266_setIp(const UCHAR *ip, const UCHAR *gateway, const UCHAR *netmask)
+BOOL esp8266_client_setIp(const UCHAR *ip, const UCHAR *gateway, const UCHAR *netmask)
 {
 	BOOL bTrans = m_bTransEnable;
 	BOOL bRet = FALSE;
@@ -379,7 +379,7 @@ BOOL esp8266_setIp(const UCHAR *ip, const UCHAR *gateway, const UCHAR *netmask)
 	if ((NULL == m_hUart) || (NULL == ip))
 		return FALSE;
 	
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	if ((NULL != gateway) && (NULL != netmask))
 		sprintf(cmd, "AT+CIPSTA=\"%d.%d.%d.%d\",\"%d.%d.%d.%d\",\"%d.%d.%d.%d\"\r\n", ip[0], ip[1], ip[2], ip[3], gateway[0], gateway[1], gateway[2], gateway[3], netmask[0], netmask[1], netmask[2], netmask[3]);
 	else
@@ -387,7 +387,7 @@ BOOL esp8266_setIp(const UCHAR *ip, const UCHAR *gateway, const UCHAR *netmask)
 	bRet = SendCmd(cmd, "OK");
 	
 	if (bTrans)
-		esp8266_StartTransparent();
+		esp8266_client_StartTransparent();
 	
 	return bRet;
 }
@@ -397,7 +397,7 @@ BOOL esp8266_setIp(const UCHAR *ip, const UCHAR *gateway, const UCHAR *netmask)
  * @param mac: mac地址
  * @retval: 设置成功返回TRUE, 失败返回FALSE
  */
-BOOL esp8266_setMac(const UCHAR *mac)
+BOOL esp8266_client_setMac(const UCHAR *mac)
 {
 	BOOL bTrans = m_bTransEnable;
 	BOOL bRet = FALSE;
@@ -406,12 +406,12 @@ BOOL esp8266_setMac(const UCHAR *mac)
 	if ((NULL == m_hUart) || (NULL == mac))
 		return FALSE;
 	
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	sprintf(cmd, "AT+CIPSTAMAC=\"%02X:%02X:%02X:%02X:%02X:%02X\"\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	bRet = SendCmd(cmd, "OK");
 	
 	if (bTrans)
-		esp8266_StartTransparent();
+		esp8266_client_StartTransparent();
 	
 	return bRet;
 }
@@ -421,7 +421,7 @@ BOOL esp8266_setMac(const UCHAR *mac)
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
-void esp8266_add_rx_obser(HalUartCBack_t hrxobser)
+void esp8266_client_add_rx_obser(HalUartCBack_t hrxobser)
 {
 	m_hUartObser = hrxobser;
 }
@@ -432,7 +432,7 @@ void esp8266_add_rx_obser(HalUartCBack_t hrxobser)
  * @param len: 写入数据长度
  * @retval: 返回发送的数据个数
  */
-UINT16 esp8266_write(UCHAR *pdata, UINT16 len)
+UINT16 esp8266_client_write(UCHAR *pdata, UINT16 len)
 {
 	//char cmd[32] = {0};
 	if (NULL == m_hUart)
@@ -458,7 +458,7 @@ UINT16 esp8266_write(UCHAR *pdata, UINT16 len)
  * @param None
  * @retval None
  */
-void esp8266_StartTransparent(void)
+void esp8266_client_StartTransparent(void)
 {
 	//BOOL bCipMode = FALSE;
 	//BOOL bCIPSend = FALSE;
@@ -484,7 +484,7 @@ void esp8266_StartTransparent(void)
 		if ((uCnt1 < ESP8266_SENDCMD_TRYCNT) && (uCnt2 < ESP8266_SENDCMD_TRYCNT))
 			m_bTransEnable = TRUE;
 		DBG(TRACE("m_bTransEnable = %s\r\n", m_bTransEnable ? "TRUE" : "FALSE"));
-		esp8266_ClrData();
+		esp8266_client_ClrData();
 	}
 }
 
@@ -494,7 +494,7 @@ void esp8266_StartTransparent(void)
  * @param None
  * @retval None
  */
-void esp8266_StopTransparent(void)
+void esp8266_client_StopTransparent(void)
 {
 	//static BOOL bFirst = TRUE;
 	UINT16 uCnt1 = 0;
@@ -511,7 +511,7 @@ void esp8266_StopTransparent(void)
 		uCnt1++;
 		}while ((!SendCmd("AT+CIPMODE=0\r\n", "OK")) && (uCnt1 < ESP8266_SENDCMD_TRYCNT));//关闭透传模式
 	}
-	esp8266_ClrData();
+	esp8266_client_ClrData();
 }
 
 /**
@@ -519,7 +519,7 @@ void esp8266_StopTransparent(void)
  * @param None
  * @retval None
  */
-void esp8266_ClrData(void)
+void esp8266_client_ClrData(void)
 {
 	memset(m_rxDataBuffer, 0, sizeof(m_rxDataBuffer));	//清空缓存
 	m_uReadPriter = 0;
@@ -530,9 +530,9 @@ void esp8266_ClrData(void)
  * @param None
  * @retval None
  */
-void esp8266_reset(void)
+void esp8266_client_reset(void)
 {
-	esp8266_StopTransparent();	//退出透传模式
+	esp8266_client_StopTransparent();	//退出透传模式
 	HalGpioWrite(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, FALSE);	//复位
 	delay(2000);
 	
@@ -547,7 +547,7 @@ void esp8266_reset(void)
  * @param None
  * @retval 返回ESP8266状态
  */
-UINT16 esp8266_check(void)
+UINT16 esp8266_client_check(void)
 {
 	BOOL bTrans = m_bTransEnable;
 	UINT16 timeOut = 0;
@@ -556,7 +556,7 @@ UINT16 esp8266_check(void)
 	if (NULL == m_hUart)
 		return ESP8266_CONNET_LOST_WIFI;
 	
-	esp8266_StopTransparent();
+	esp8266_client_StopTransparent();
 	
 	m_uReadPriter = 0;
 	m_hUart->write("AT+CIPSTATUS\r\n", 14);
@@ -593,7 +593,7 @@ UINT16 esp8266_check(void)
 	}
 	
 	if (bTrans)
-		esp8266_StartTransparent();
+		esp8266_client_StartTransparent();
 	
 	m_uWifiState = status;
 	return status;
@@ -616,7 +616,7 @@ static void init(void)
  */
 static void deInit(void)
 {
-	esp8266_DeInit();
+	esp8266_client_DeInit();
 }
 
 
@@ -627,7 +627,7 @@ static void deInit(void)
  */
 static void add_rx_obser(HalUartCBack_t hrxobser)
 {
-	esp8266_add_rx_obser(hrxobser);
+	esp8266_client_add_rx_obser(hrxobser);
 }
 
 
@@ -678,7 +678,7 @@ static void set_parity(UINT16 parity)
  */
 static void write(UCHAR *pdata, UINT16 len)
 {
-	esp8266_write(pdata, len);
+	esp8266_client_write(pdata, len);
 }
 
 /**
@@ -705,7 +705,7 @@ static void New(void)
  * @param None
  * @retval: 指定端口串口通讯句柄
  */
-HALUartTypeDef* esp8266_getinstance(void)
+HALUartTypeDef* esp8266_client_getinstance(void)
 {
 	if (NULL == m_hUart)
 		return NULL;
@@ -717,5 +717,5 @@ HALUartTypeDef* esp8266_getinstance(void)
 	
 	return pthis;
 }
-#endif //CFG_ESP8266
+#endif //CFG_ESP8266_CLIENT
 

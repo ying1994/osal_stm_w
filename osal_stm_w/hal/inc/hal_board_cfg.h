@@ -39,6 +39,6 @@
 
 //МгдиW25X16Ч§ЖЏ
 //#define CFG_W25X16
-#define CFG_ESP8266
+#define CFG_ESP8266_CLIENT
 
 #endif

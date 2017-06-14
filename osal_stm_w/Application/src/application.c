@@ -20,7 +20,7 @@
 #include "application.h"
 #include "debugunit.h"
 
-#include "esp8266.h"
+#include "esp8266_client.h"
 #include "comm_esp8266.h"
 
 
@@ -147,7 +147,7 @@ static void OnDebugMsgEvent(MsgTypeDef* pMsg)
 	}
 }
 
-#ifdef CFG_ESP8266	
+#ifdef CFG_ESP8266_CLIENT	
 /**
  * @brief 调试单元消息处理函数
  */
@@ -176,26 +176,26 @@ BOOL checkParamStr(UCHAR* msg, UINT16 len)
 //检查Wifi状态
 static void taskForCheckWifiStage(void)
 {
-	g_uWifiState = esp8266_check();
+	g_uWifiState = esp8266_client_check();
 	switch (g_uWifiState)
 	{
 		case ESP8266_CONNET_GETIP: //连接Wifi
-			esp8266_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
+			esp8266_client_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
 			break;
 		case ESP8266_CONNETED: //建立连接
-			esp8266_StartTransparent();
+			esp8266_client_StartTransparent();
 			break;
 		case ESP8266_CONNET_LOST: //失去连接
-			esp8266_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
+			esp8266_client_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
 			break;
 		default:				//物理掉线
-			esp8266_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
+			esp8266_client_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
 			break;
 	}
 	DBG(TRACE("taskForCheckWifiStage Run: %d\r\n", g_uWifiState));
 }
 
-#endif //CFG_ESP8266	
+#endif //CFG_ESP8266_CLIENT	
 
 /**
  * @brief application初始化
@@ -213,7 +213,7 @@ void application_init(void)
 	hComm->add_rx_obser(OnDebugMsgEvent);
 	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT0);
 	
-#ifdef CFG_ESP8266	
+#ifdef CFG_ESP8266_CLIENT	
 	//读取IP数据
 	HalFlashRead(WIFI_SSID_ADDR, g_aSsid, WIFI_SSID_SIZE);
 	if (!checkParamStr(g_aSsid, WIFI_SSID_SIZE))
@@ -267,19 +267,19 @@ void application_init(void)
 	}
 	
 	//ESP8266初始化
-	esp8266_Init(hal_uart_getinstance(HAL_UART2));
-	esp8266_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
-	esp8266_setIp(g_aLocalIP, g_aLocalGateway, g_aLocalMask);//设置IP
-	esp8266_setMac(g_aLocalMac);//设置MAC地址
-	esp8266_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
-	esp8266_StartTransparent();//ESP8266进入透传模式
+	esp8266_client_Init(hal_uart_getinstance(HAL_UART2));
+	esp8266_client_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
+	esp8266_client_setIp(g_aLocalIP, g_aLocalGateway, g_aLocalMask);//设置IP
+	esp8266_client_setMac(g_aLocalMac);//设置MAC地址
+	esp8266_client_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
+	esp8266_client_StartTransparent();//ESP8266进入透传模式
 	
-	comm_registe(comm_esp8266_getInstance(), COMM_CHANNEL1);
+	comm_registe(comm_esp8266_client_getInstance(), COMM_CHANNEL1);
 	hComm = comm_getInstance(COMM_CHANNEL1);
-	hComm->init(esp8266_getinstance());
+	hComm->init(esp8266_client_getinstance());
 	hComm->add_rx_obser(OnEsp8826MsgEvent);
 	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT1);
-#endif //CFG_ESP8266
+#endif //CFG_ESP8266_CLIENT
 
 	osal_router_init(&m_hRouterInstance);
 	bd_updateunit_Init(&m_hUpdateInstance);

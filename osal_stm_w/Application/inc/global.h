@@ -20,7 +20,7 @@
 
 #if !ENABLE_BOOTLOADER_CODE
 
-#ifdef CFG_ESP8266
+#ifdef CFG_ESP8266_CLIENT
 extern UCHAR g_aSsid[WIFI_SSID_SIZE];
 extern UCHAR g_aPwd[WIFI_PWD_SIZE];
 
@@ -35,7 +35,7 @@ extern UINT16 g_uServerPort;
 
 extern UINT16 g_uWifiState;
 
-#endif //CFG_ESP8266
+#endif //CFG_ESP8266_CLIENT
 
 #endif //!ENABLE_BOOTLOADER_CODE
 #endif

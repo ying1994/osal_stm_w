@@ -1,5 +1,5 @@
 /**
- * @file    comm_esp8266.c
+ * @file    comm_esp8266_client.c
  * @author  WSF
  * @version V1.0.0
  * @date    2016.03.15
@@ -477,7 +477,7 @@ static void New(void)
  * @return 返回Comm操作结构句柄
  * @retval COMM操作结构句柄
  */
-CommTypeDef* comm_esp8266_getInstance(void)
+CommTypeDef* comm_esp8266_client_getInstance(void)
 {
 	if (NULL == pthis)
 	{

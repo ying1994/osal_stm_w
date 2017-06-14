@@ -16,7 +16,7 @@
 #include "stdafx.h"
 #include "global.h"
 #include "osal_stm_w_cfg.h"
-#include "esp8266.h"
+#include "esp8266_client.h"
 #include "debugunit.h"
 
 //查询BootLoader版本
@@ -75,7 +75,7 @@ static void OnGetChipID(MsgTypeDef* pMsg)
 	}
 }
 
-#ifdef CFG_ESP8266
+#ifdef CFG_ESP8266_CLIENT
 //本地IP消息
 static void OnNetLocalIpEvent(MsgTypeDef* pMsg)
 {
@@ -211,13 +211,13 @@ static void OnNetWifiConnetEvent(MsgTypeDef* pMsg)
 		u8ConnetType = pMsg->data[0];
 		if (1 == u8ConnetType)
 		{
-			esp8266_connet_wifi(g_aSsid, g_aPwd);
+			esp8266_client_connet_wifi(g_aSsid, g_aPwd);
 		}
 		else if (2 == u8ConnetType)
 		{
-			esp8266_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);
+			esp8266_client_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);
 		}
-		g_uWifiState = esp8266_check();
+		g_uWifiState = esp8266_client_check();
 	}
 	
 	if (OP_GET & pMsg->opType)
@@ -240,7 +240,7 @@ static void OnNetMsgTestEvent(MsgTypeDef* pMsg)
 	UINT16 ret = 0;
 	if (pMsg->len > 0)
 	{
-		ret = esp8266_write(pMsg->data, pMsg->len);
+		ret = esp8266_client_write(pMsg->data, pMsg->len);
 	}
 	
 	if (OP_GET & pMsg->opType)
@@ -250,7 +250,7 @@ static void OnNetMsgTestEvent(MsgTypeDef* pMsg)
 		osal_router_sendMsg(pMsg->uSerPort, pMsg);
 	}
 }
-#endif //CFG_ESP8266
+#endif //CFG_ESP8266_CLIENT
 
 /**
  * @brief 调试单元消息处理
@@ -273,7 +273,7 @@ void DebugUnit_OnMsgEvent(MsgTypeDef* pMsg)
 		case GET_CHIP_ID:
 			OnGetChipID(pMsg);
 			break;
-#ifdef CFG_ESP8266
+#ifdef CFG_ESP8266_CLIENT
 		case NET_LOCAL_IP:
 			OnNetLocalIpEvent(pMsg);
 			break;
@@ -289,7 +289,7 @@ void DebugUnit_OnMsgEvent(MsgTypeDef* pMsg)
 		case NET_MSG_TEST:
 			OnNetMsgTestEvent(pMsg);
 			break;
-#endif //CFG_ESP8266
+#endif //CFG_ESP8266_CLIENT
 		default:
 			break;
 		}

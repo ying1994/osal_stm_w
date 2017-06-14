@@ -1,5 +1,5 @@
 /**
- * @file    comm_esp8266.h
+ * @file    comm_esp8266_client.h
  * @author  WSF
  * @version V1.0.0
  * @date    2016.03.15
@@ -23,7 +23,7 @@
  * @param eChennal: COMM通道枚举 @ref CommChannelDef
  * @retval COMM操作结构句柄
  */
-CommTypeDef* comm_esp8266_getInstance(void);
+CommTypeDef* comm_esp8266_client_getInstance(void);
 
  
 #endif //__COMM2_H_
