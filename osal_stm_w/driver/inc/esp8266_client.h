@@ -25,17 +25,17 @@
 #ifdef CFG_ESP8266
 
 
-#define ESP8266_RST_GPIO_TYPE	GPIOA 
-#define ESP8266_RST_GPIO_PIN	GPIO_Pin_0 
+#define ESP8266_RST_GPIO_TYPE	GPIOD		//GPIOA
+#define ESP8266_RST_GPIO_PIN	GPIO_Pin_1	//GPIO_Pin_2
 
 #define ESP8266_MAX_MSG_SIZE	256
 
 typedef enum _ESP8266_CONNST_STATUS
 {
-	ESP8266_CONNETED = 0,		/*!< 建立连接 */
-	ESP8266_CONNET_LOST,		/*!< 失去连接 */
-	ESP8266_CONNET_GETIP,		/*!< WIFI在线*/
-	ESP8266_CONNET_LOST_WIFI	/*!< 物理掉线 */
+	ESP8266_CONNETED = 0,		/*!< 建立连接 ，wifi和服务器连上*/
+	ESP8266_CONNET_LOST,		/*!< 失去连接 服务器断开，wifi正常*/
+	ESP8266_CONNET_GETIP,		/*!< WIFI在线，连接上wifi*/
+	ESP8266_CONNET_LOST_WIFI	/*!< 物理掉线 ，wifi掉线*/
 }Esp8266ConnetStatus;
 
 /**
@@ -162,6 +162,8 @@ void esp8266_reset(void);
  * @retval 返回ESP8266状态
  */
 UINT16 esp8266_check(void);
+
+void esp8266_delay(UINT32 t);
 
 /**
  * @brief: 获取端口串口通讯句柄

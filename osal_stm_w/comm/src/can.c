@@ -336,9 +336,21 @@ static void taskForReadBuf1(void)
 	}
 }
 
+//发送中断服务函数
+#ifdef  STM32F10X_CL
+void CAN1_TX_IRQHandler (void)
+#else
+void USB_HP_CAN1_TX_IRQHandler (void)
+#endif
+{
+}
 
-//中断服务函数			 
-void CAN1_RX0_IRQHandler(void)
+//接收中断服务函数
+#ifdef  STM32F10X_CL
+void CAN1_RX0_IRQHandler (void)
+#else
+void USB_LP_CAN1_RX0_IRQHandler (void)
+#endif
 {
   	CanRxMsg RxMessage;
 	
@@ -662,8 +674,12 @@ static void taskForReadBuf2(void)
 	}
 }
 
+//发送中断服务函数
+void CAN2_TX_IRQHandler(void)
+{
+}
  
-//中断服务函数			    
+//接收中断服务函数
 void CAN2_RX0_IRQHandler(void)
 {
   	CanRxMsg RxMessage;

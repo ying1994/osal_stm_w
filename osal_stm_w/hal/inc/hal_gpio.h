@@ -28,7 +28,6 @@
  */
 typedef enum
 {
-	HAL_GPIOMode_AIN = 0x0,			/*!< 模拟输入 */
 	HAL_GPIOMode_IN_FLOATING = 0x04,	/*!< 浮空输入 */
 	HAL_GPIOMode_IPD = 0x28,			/*!< 下拉输入 */
 	HAL_GPIOMode_IPU = 0x48,			/*!< 上拉输入 */
