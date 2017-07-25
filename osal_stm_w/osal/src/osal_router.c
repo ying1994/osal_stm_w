@@ -14,12 +14,17 @@
  *
  */
 
-#include "stdafx.h"
-#include "osal_stm_w_cfg.h"
+
+#include "hal_board.h"
+#include "osal.h"
 
 #include "comm.h"
-#include "osal_router.h"
 #include "osal_error.h"
+#include "osal_router.h"
+#include "osal_updateunit.h"
+
+
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 
 
 /* 路由的端口收发实例句柄 */
@@ -90,7 +95,7 @@ BOOL osal_router_OnCommMsg(MsgTypeDef* pMsg)
 		switch(pMsg->blockID)
 		{
 		case UPDATE_UNIT:
-			bd_updateunit_OnCommMsg(pMsg);
+			osal_updateunit_OnCommMsg(pMsg);
 			break;
 		case ROUTER_UNIT:
 			OnCommMsg(pMsg);
@@ -162,6 +167,30 @@ BOOL osal_router_sendMsg(UINT8 uPortAddr, MsgTypeDef* pMsg)
 }
 
 /**
+ * @brief 通讯结点心跳包发送计时器
+ */
+static void OnRouterCommHandleTimer(void)
+{
+	//TODO: 在此添加握手心跳包通讯代码
+	//MsgTypeDef* pMsg = osal_router_getFreeMsgHandle();
+	//pMsg->uAddr = 0;
+	//pMsg->blockID = ROUTER_UNIT;
+	//pMsg->functionID = COMM_HANDLE;
+	//pMsg->opType = OP_STATUS;
+	//pMsg->len = 0;
+	
+	//osal_router_sendMsg(0, pMsg);
+}
+
+/**
+ * @brief 通讯结点心跳计数器
+ */
+static void OnRouterTimer(void)
+{
+	//TODO: 在此添加握手心跳包通讯代码
+}
+
+/**
  * @brief 设置结点地址
  * @param uAddr 本地结点地址
  * @return 返回本地结点地址
@@ -208,6 +237,10 @@ void osal_router_init(OSALRouterCBack_t* hRouterBase)
 		m_uAddress = uAddress;
 	TRACE("Device Address: %d\r\n", m_uAddress);
 		
+	HalSetShareTimer(OnRouterCommHandleTimer, 1000);//创建独立定时器用于发送心跳包
+	HalSetShareTimer(OnRouterTimer, 1000);//创建独立定时器监控结点心在线事件
 	m_hRouterInstance = hRouterBase;
 }
+
+#endif // (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 

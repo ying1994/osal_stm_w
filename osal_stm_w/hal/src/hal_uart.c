@@ -10,10 +10,10 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
+
 #include "hal_uart.h"
 
 #ifdef CFG_HAL_UART
@@ -31,9 +31,9 @@ static void uart1_set_baudrate(UINT32 baudrate)
     USART_Init(USART1, &USART_InitStructure[0]); //初始化串口
 }
 
-static void uart1_set_wordlength(UINT16 wordlength)
+static void uart1_set_databits(UINT16 databits)
 {
-	USART_InitStructure[0].USART_WordLength = wordlength;//字长为8位数据格式
+	USART_InitStructure[0].USART_WordLength = databits;//字长为8位数据格式
     USART_Init(USART1, &USART_InitStructure[0]); //初始化串口
 }
 
@@ -53,6 +53,11 @@ static void uart1_writeByte(UCHAR data)
 { 
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC) == RESET); 
 	USART_SendData(USART1, data); 
+}
+
+static UINT16 uart1_read(UCHAR *pdata, UINT16 len)
+{
+	return 0;
 }
 
 static void uart1_write(UCHAR *pdata, UINT16 len)
@@ -147,9 +152,9 @@ static void uart2_set_baudrate(UINT32 baudrate)
     USART_Init(USART2, &USART_InitStructure[1]); //初始化串口
 }
 
-static void uart2_set_wordlength(UINT16 wordlength)
+static void uart2_set_databits(UINT16 databits)
 {
-	USART_InitStructure[1].USART_WordLength = wordlength;//字长为8位数据格式
+	USART_InitStructure[1].USART_WordLength = databits;//字长为8位数据格式
     USART_Init(USART2, &USART_InitStructure[1]); //初始化串口
 }
 
@@ -169,6 +174,11 @@ static void uart2_writeByte(UCHAR data)
 {
 	while(USART_GetFlagStatus(USART2,USART_FLAG_TC)==RESET);
 	USART_SendData(USART2, data); 
+}
+
+static UINT16 uart2_read(UCHAR *pdata, UINT16 len)
+{
+	return 0;
 }
 
 static void uart2_write(UCHAR *pdata, UINT16 len)
@@ -264,9 +274,9 @@ static void uart3_set_baudrate(UINT32 baudrate)
     USART_Init(USART3, &USART_InitStructure[2]); //初始化串口
 }
 
-static void uart3_set_wordlength(UINT16 wordlength)
+static void uart3_set_databits(UINT16 databits)
 {
-	USART_InitStructure[2].USART_WordLength = wordlength;//字长为8位数据格式
+	USART_InitStructure[2].USART_WordLength = databits;//字长为8位数据格式
     USART_Init(USART3, &USART_InitStructure[2]); //初始化串口
 }
 
@@ -286,6 +296,11 @@ static void uart3_writeByte(UCHAR data)
 {
 	while(USART_GetFlagStatus(USART3,USART_FLAG_TC)==RESET);
 	USART_SendData(USART3, data); 
+}
+
+static UINT16 uart3_read(UCHAR *pdata, UINT16 len)
+{
+	return 0;
 }
 
 static void uart3_write(UCHAR *pdata, UINT16 len)
@@ -381,9 +396,9 @@ static void uart4_set_baudrate(UINT32 baudrate)
     USART_Init(UART4, &USART_InitStructure[3]); //初始化串口
 }
 
-static void uart4_set_wordlength(UINT16 wordlength)
+static void uart4_set_databits(UINT16 databits)
 {
-	USART_InitStructure[3].USART_WordLength = wordlength;//字长为8位数据格式
+	USART_InitStructure[3].USART_WordLength = databits;//字长为8位数据格式
     USART_Init(UART4, &USART_InitStructure[3]); //初始化串口
 }
 
@@ -403,6 +418,11 @@ static void uart4_writeByte(UCHAR data)
 {
 	while(USART_GetFlagStatus(UART4,USART_FLAG_TC)==RESET);
 	USART_SendData(UART4, data); 
+}
+
+static UINT16 uart4_read(UCHAR *pdata, UINT16 len)
+{
+	return 0;
 }
 
 static void uart4_write(UCHAR *pdata, UINT16 len)
@@ -498,9 +518,9 @@ static void uart5_set_baudrate(UINT32 baudrate)
     USART_Init(UART5, &USART_InitStructure[4]); //初始化串口
 }
 
-static void uart5_set_wordlength(UINT16 wordlength)
+static void uart5_set_databits(UINT16 databits)
 {
-	USART_InitStructure[4].USART_WordLength = wordlength;//字长为8位数据格式
+	USART_InitStructure[4].USART_WordLength = databits;//字长为8位数据格式
     USART_Init(UART5, &USART_InitStructure[4]); //初始化串口
 }
 
@@ -520,6 +540,11 @@ static void uart5_writeByte(UCHAR data)
 {
 	while(USART_GetFlagStatus(UART5,USART_FLAG_TC)==RESET);
 	USART_SendData(UART5, data); 
+}
+
+static UINT16 uart5_read(UCHAR *pdata, UINT16 len)
+{
+	return 0;
 }
 
 static void uart5_write(UCHAR *pdata, UINT16 len)
@@ -685,9 +710,10 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART1].init = uart1_init;
 		m_hUartInstance[HAL_UART1].deInit = uart1_deInit;
 		m_hUartInstance[HAL_UART1].set_baudrate = uart1_set_baudrate;
-		m_hUartInstance[HAL_UART1].set_wordlength = uart1_set_wordlength;
+		m_hUartInstance[HAL_UART1].set_databits = uart1_set_databits;
 		m_hUartInstance[HAL_UART1].set_stopbit = uart1_set_stopbit;
 		m_hUartInstance[HAL_UART1].set_parity = uart1_set_parity;
+		m_hUartInstance[HAL_UART1].read = uart1_read;
 		m_hUartInstance[HAL_UART1].write = uart1_write;
 		pthis[HAL_UART1] = &m_hUartInstance[HAL_UART1];
 		pthis[HAL_UART1]->init();
@@ -697,9 +723,10 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART2].init = uart2_init;
 		m_hUartInstance[HAL_UART2].deInit = uart2_deInit;
 		m_hUartInstance[HAL_UART2].set_baudrate = uart2_set_baudrate;
-		m_hUartInstance[HAL_UART2].set_wordlength = uart2_set_wordlength;
+		m_hUartInstance[HAL_UART2].set_databits = uart2_set_databits;
 		m_hUartInstance[HAL_UART2].set_stopbit = uart2_set_stopbit;
 		m_hUartInstance[HAL_UART2].set_parity = uart2_set_parity;
+		m_hUartInstance[HAL_UART2].read = uart2_read;
 		m_hUartInstance[HAL_UART2].write = uart2_write;
 		pthis[HAL_UART2] = &m_hUartInstance[HAL_UART2];
 		pthis[HAL_UART2]->init();
@@ -709,9 +736,10 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART3].init = uart3_init;
 		m_hUartInstance[HAL_UART3].deInit = uart3_deInit;
 		m_hUartInstance[HAL_UART3].set_baudrate = uart3_set_baudrate;
-		m_hUartInstance[HAL_UART3].set_wordlength = uart3_set_wordlength;
+		m_hUartInstance[HAL_UART3].set_databits = uart3_set_databits;
 		m_hUartInstance[HAL_UART3].set_stopbit = uart3_set_stopbit;
 		m_hUartInstance[HAL_UART3].set_parity = uart3_set_parity;
+		m_hUartInstance[HAL_UART3].read = uart3_read;
 		m_hUartInstance[HAL_UART3].write = uart3_write;
 		pthis[HAL_UART3] = &m_hUartInstance[HAL_UART3];
 		pthis[HAL_UART3]->init();
@@ -721,9 +749,10 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART4].init = uart4_init;
 		m_hUartInstance[HAL_UART4].deInit = uart4_deInit;
 		m_hUartInstance[HAL_UART4].set_baudrate = uart4_set_baudrate;
-		m_hUartInstance[HAL_UART4].set_wordlength = uart4_set_wordlength;
+		m_hUartInstance[HAL_UART4].set_databits = uart4_set_databits;
 		m_hUartInstance[HAL_UART4].set_stopbit = uart4_set_stopbit;
 		m_hUartInstance[HAL_UART4].set_parity = uart4_set_parity;
+		m_hUartInstance[HAL_UART4].read = uart4_read;
 		m_hUartInstance[HAL_UART4].write = uart4_write;
 		pthis[HAL_UART4] = &m_hUartInstance[HAL_UART4];
 		pthis[HAL_UART4]->init();
@@ -733,9 +762,10 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART5].init = uart5_init;
 		m_hUartInstance[HAL_UART5].deInit = uart5_deInit;
 		m_hUartInstance[HAL_UART5].set_baudrate = uart5_set_baudrate;
-		m_hUartInstance[HAL_UART5].set_wordlength = uart5_set_wordlength;
+		m_hUartInstance[HAL_UART5].set_databits = uart5_set_databits;
 		m_hUartInstance[HAL_UART5].set_stopbit = uart5_set_stopbit;
 		m_hUartInstance[HAL_UART5].set_parity = uart5_set_parity;
+		m_hUartInstance[HAL_UART5].read = uart5_read;
 		m_hUartInstance[HAL_UART5].write = uart5_write;
 		pthis[HAL_UART5] = &m_hUartInstance[HAL_UART5];
 		pthis[HAL_UART5]->init();

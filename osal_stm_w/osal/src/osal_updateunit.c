@@ -13,10 +13,15 @@
  * All rights res
  *
  */
-#include "stdafx.h"
-#include "updateunit.h"
-#include "comm.h"
+#include "osal_updateunit.h"
+
+#include "osal.h"
 #include "osal_error.h"
+#include "comm.h"
+
+
+#if (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_UPDATEUNIT))
+
 
 /* 系统升级单元回调函数集合 */
 UpdateUnitCBack_t* m_hCallBackInstance = NULL;
@@ -26,7 +31,7 @@ UpdateUnitCBack_t* m_hCallBackInstance = NULL;
  * @param pMsg 接收消息处理句柄
  * @return void
  */
-void bd_updateunit_OnCommMsg(MsgTypeDef* pMsg)
+void osal_updateunit_OnCommMsg(MsgTypeDef* pMsg)
 {
 	if (NULL == m_hCallBackInstance)
 		return;
@@ -72,8 +77,9 @@ void bd_updateunit_OnCommMsg(MsgTypeDef* pMsg)
  * @param pMsg 接收消息处理句柄
  * @return void
  */
-void bd_updateunit_Init(UpdateUnitCBack_t *hCallBacks)
+void osal_updateunit_Init(UpdateUnitCBack_t *hCallBacks)
 {
 	m_hCallBackInstance = hCallBacks;
 }
 
+#endif // (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_UPDATEUNIT))

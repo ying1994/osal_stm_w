@@ -61,6 +61,7 @@ int main(void)
 #else
 	/*TODO: Add application code here */
 	HalIwdgInit(30);
+	osal_task_create(FreeIWDG_task, 2000);//看门狗喂狗任务
 	application_init();
 #endif
 	/* run message task */

@@ -10,7 +10,7 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 

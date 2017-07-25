@@ -15,7 +15,7 @@
  */
 #include "stdafx.h"
 #include "global.h"
-#include "osal_stm_w_cfg.h"
+#include "osal.h"
 #include "esp8266_client.h"
 #include "debugunit.h"
 
@@ -75,7 +75,7 @@ static void OnGetChipID(MsgTypeDef* pMsg)
 	}
 }
 
-#ifdef CFG_ESP8266_CLIENT
+#ifdef CFG_USE_NET
 //本地IP消息
 static void OnNetLocalIpEvent(MsgTypeDef* pMsg)
 {
@@ -154,7 +154,9 @@ static void OnNetServerIpEvent(MsgTypeDef* pMsg)
 		osal_router_sendMsg(pMsg->uSerPort, pMsg);
 	}
 }
+#endif //CFG_USE_NET
 
+#if (defined(CFG_USE_NET) && defined(CFG_USE_WIFI))
 //Wifi 参数消息
 static void OnNetWifiParamEvent(MsgTypeDef* pMsg)
 {
@@ -200,7 +202,9 @@ static void OnNetWifiParamEvent(MsgTypeDef* pMsg)
 		osal_router_sendMsg(pMsg->uSerPort, pMsg);
 	}
 }
+#endif //(defined(CFG_USE_NET) && defined(CFG_USE_WIFI))
 
+#if (defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 //网络连接 参数消息
 static void OnNetWifiConnetEvent(MsgTypeDef* pMsg)
 {
@@ -233,24 +237,7 @@ static void OnNetWifiConnetEvent(MsgTypeDef* pMsg)
 		osal_router_sendMsg(pMsg->uSerPort, pMsg);
 	}
 }
-
-//网络数据发送测试 参数消息
-static void OnNetMsgTestEvent(MsgTypeDef* pMsg)
-{
-	UINT16 ret = 0;
-	if (pMsg->len > 0)
-	{
-		ret = esp8266_client_write(pMsg->data, pMsg->len);
-	}
-	
-	if (OP_GET & pMsg->opType)
-	{
-		pMsg->opType = (ret > 0) ? OP_STATUS : OP_ERROR;
-		
-		osal_router_sendMsg(pMsg->uSerPort, pMsg);
-	}
-}
-#endif //CFG_ESP8266_CLIENT
+#endif //(defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 
 /**
  * @brief 调试单元消息处理
@@ -273,23 +260,22 @@ void DebugUnit_OnMsgEvent(MsgTypeDef* pMsg)
 		case GET_CHIP_ID:
 			OnGetChipID(pMsg);
 			break;
-#ifdef CFG_ESP8266_CLIENT
+#ifdef CFG_USE_NET
 		case NET_LOCAL_IP:
 			OnNetLocalIpEvent(pMsg);
 			break;
 		case NET_SERVER_IP:
 			OnNetServerIpEvent(pMsg);
 			break;
+#endif //CFG_USE_NET
+#if (defined(CFG_USE_NET) && defined(CFG_USE_WIFI))
 		case NET_WIFI_PARAM:
 			OnNetWifiParamEvent(pMsg);
 			break;
 		case NET_WIFI_CONNET:
 			OnNetWifiConnetEvent(pMsg);
 			break;
-		case NET_MSG_TEST:
-			OnNetMsgTestEvent(pMsg);
-			break;
-#endif //CFG_ESP8266_CLIENT
+#endif //(defined(CFG_USE_NET) && defined(CFG_USE_WIFI))
 		default:
 			break;
 		}

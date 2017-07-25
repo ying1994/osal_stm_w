@@ -10,13 +10,14 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  */
 #ifndef COMM3_H
 #define COMM3_H
 #include "types.h"
 #include "comm.h"
 
+#if (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_COMM3))
 
 /**
  * @brief 获取Comm操作结构句柄
@@ -26,4 +27,6 @@
 CommTypeDef* comm3_getInstance(void);
 
  
+#endif // (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_COMM3))
+
 #endif //__COMM3_H_

@@ -10,12 +10,19 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  */
 #ifndef COMM_H
 #define COMM_H
-#include "types.h"
-#include "hal_uart.h"
+#include "osal.h"
+
+#ifdef CFG_OSAL_COMM
+
+#include "hal_board.h"
+
+#include "unit.h"
+#include "optype.h"
+#include "function.h"
 
 /** 数据物理帧起始标志 */
 #define PHY_DATA_FLAG1 0x55
@@ -136,5 +143,6 @@ CommTypeDef* comm_getInstance(CommChannelDef eChannel);
  * @retval 注册成功返回TRUE，失败返回FALSE
  */
 BOOL comm_registe(CommTypeDef* hCommHandle, CommChannelDef eChannel);
- 
+
+#endif // CFG_OSAL_COMM
 #endif //__COMM_H_

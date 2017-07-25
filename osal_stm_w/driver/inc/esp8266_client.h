@@ -41,9 +41,10 @@ typedef enum _ESP8266_CONNST_STATUS
 /**
  * @brief ESP8266初始化
  * @param hUart:  Uart实例句柄
+ * @param bConetServer:  是否连接服务器
  * @retval None
  */
-void esp8266_client_Init(HALUartTypeDef* hUart);
+void esp8266_client_Init(HALUartTypeDef* hUart, BOOL bConetServer);
 
 /**
  * @brief ESP8266资源释放

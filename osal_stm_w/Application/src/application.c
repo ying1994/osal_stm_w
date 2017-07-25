@@ -15,7 +15,11 @@
  */
 #include "stdafx.h"
 #include "global.h"
-#include "osal_stm_w_cfg.h"
+
+#if !ENABLE_BOOTLOADER_CODE
+
+#include "osal.h"
+#include "osal_net.h"
 
 #include "application.h"
 #include "debugunit.h"
@@ -23,10 +27,11 @@
 #include "esp8266_client.h"
 #include "comm_esp8266.h"
 
+#if (defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
+#include "wizchip_net.h"
+#endif //(defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
 
-#if !ENABLE_BOOTLOADER_CODE
-
-
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 /**
  * @brief 系统开始升级消息处理
  * @param pMsg 接收到的消息句柄
@@ -81,6 +86,19 @@ static void UpdateUint_Onend(MsgTypeDef* pMsg)
 {
 }
 
+/* 系统升级单元实例 */	
+static UpdateUnitCBack_t m_hUpdateInstance = 
+{
+	UpdateUint_OnStart,
+	UpdateUint_OnReady,
+	UpdateUint_OnUPDATING,
+	UpdateUint_OnResult,
+	UpdateUint_OnLastResult,
+	UpdateUint_Onend
+};
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
+
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 /**
  * @brief 通讯结点在线事件回调函数
  * @param uChannel 产生事件通道结点地址
@@ -100,24 +118,15 @@ static void CommRouter_SendMsg(MsgTypeDef* pMsg)
 {
 }
 
-/* 系统升级单元实例 */	
-static UpdateUnitCBack_t m_hUpdateInstance = 
-{
-	UpdateUint_OnStart,
-	UpdateUint_OnReady,
-	UpdateUint_OnUPDATING,
-	UpdateUint_OnResult,
-	UpdateUint_OnLastResult,
-	UpdateUint_Onend
-};
-
 /* 路由单元实例 */
 static OSALRouterCBack_t m_hRouterInstance =
 {
 	CommRouter_OnConnetEnent,
 	CommRouter_SendMsg
 };
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 /**
  * @brief 调试单元消息处理函数
  */
@@ -146,8 +155,9 @@ static void OnDebugMsgEvent(MsgTypeDef* pMsg)
 		OnCommMsgEvent(pMsg);
 	}
 }
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 
-#ifdef CFG_ESP8266_CLIENT	
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT) && defined(CFG_USE_COMM_ESP8266))	
 /**
  * @brief 调试单元消息处理函数
  */
@@ -172,7 +182,9 @@ BOOL checkParamStr(UCHAR* msg, UINT16 len)
     }
     return FALSE;
 }
+#endif
 
+#if (defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 //检查Wifi状态
 static void taskForCheckWifiStage(void)
 {
@@ -204,6 +216,12 @@ static void taskForCheckWifiStage(void)
  */
 void application_init(void)
 {
+#if (defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
+	HALSpiTypeDef *hspi = NULL;
+	wiz_NetInfo netinfo;
+#endif //(defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
+	
+#if (defined(CFG_OSAL_COMM))
 	CommTypeDef* hComm = NULL;
 	//UCHAR blocks[] = {UPDATE_UNIT, DEBUG_UNIT, ROUTER_UNIT};
 	
@@ -211,81 +229,52 @@ void application_init(void)
 	hComm = comm_getInstance(COMM_CHANNEL0);
 	hComm->init(hal_uart_getinstance(HAL_UART1));
 	hComm->add_rx_obser(OnDebugMsgEvent);
+#if defined(CFG_OSAL_ROUTER)
 	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT0);
+#endif //#if defined(CFG_OSAL_ROUTER)
+#endif //#if defined(CFG_OSAL_COMM)
 	
-#ifdef CFG_ESP8266_CLIENT	
-	//读取IP数据
-	HalFlashRead(WIFI_SSID_ADDR, g_aSsid, WIFI_SSID_SIZE);
-	if (!checkParamStr(g_aSsid, WIFI_SSID_SIZE))
-		memset(g_aSsid, 0, WIFI_SSID_SIZE);
-	HalFlashRead(WIFI_PWD_ADDR, g_aPwd, WIFI_PWD_SIZE);
-	if (!checkParamStr(g_aPwd, WIFI_PWD_SIZE))
-		memset(g_aPwd, 0, WIFI_PWD_SIZE);
-	HalFlashRead(WIFI_SERVER_IP_ADDR, g_aServerIp, WIFI_SERVER_IP_SIZE);
-	if (!checkParamStr(g_aServerIp, WIFI_SERVER_IP_SIZE))
-		sprintf((char*)g_aServerIp, "192.168.1.102");
-	HalFlashRead(WIFI_SERVER_PORT_ADDR, (UCHAR*)&g_uServerPort, sizeof(g_uServerPort));
-	if (0xffff == g_uServerPort)
-		g_uServerPort = 1234;
-	HalFlashRead(WIFI_CONNET_TYPE_ADDR, (UCHAR*)&g_bTcpConnet, sizeof(g_bTcpConnet));
-	if (0xff == g_bTcpConnet)
-		g_bTcpConnet = 1;
-	HalFlashRead(WIFI_LOCAL_IP_ADDR, g_aLocalIP, WIFI_LOCAL_IP_SIZE);
-	if (!checkParamStr(g_aLocalIP, WIFI_LOCAL_IP_SIZE))
-	{
-		g_aLocalIP[0] = 0xC0;
-		g_aLocalIP[1] = 0xA8;
-		g_aLocalIP[2] = 0x01;
-		g_aLocalIP[3] = 0x0B;
-	}
-	HalFlashRead(WIFI_LOCAL_GW_ADDR, g_aLocalGateway, WIFI_LOCAL_GW_SIZE);
-	if (!checkParamStr(g_aLocalGateway, WIFI_LOCAL_GW_SIZE))
-	{
-		g_aLocalGateway[0] = 0xC0;
-		g_aLocalGateway[1] = 0xA8;
-		g_aLocalGateway[2] = 0x01;
-		g_aLocalGateway[3] = 0x01;
-	}
-	HalFlashRead(WIFI_LOCAL_MASK_ADDR, g_aLocalMask, WIFI_LOCAL_MASK_SIZE);
-	//DBG(TRACE("Mask3: %x\r\n",g_aLocalMask[3]));
-	if (!checkParamStr(g_aLocalMask, WIFI_LOCAL_MASK_SIZE))
-	{
-		g_aLocalMask[0] = 0xFF;
-		g_aLocalMask[1] = 0xFF;
-		g_aLocalMask[2] = 0xFF;
-		g_aLocalMask[3] = 0x00;
-	}
-	HalFlashRead(WIFI_LOCAL_MAC_ADDR, g_aLocalMac, WIFI_LOCAL_MAC_SIZE);
-	if (!checkParamStr(g_aLocalMac, WIFI_LOCAL_MAC_SIZE))
-	{
-		g_aLocalMac[0] = 0xEA;
-		g_aLocalMac[1] = 0x2D;
-		g_aLocalMac[2] = 0x63;
-		g_aLocalMac[3] = 0x17;
-		g_aLocalMac[4] = 0x9D;
-		g_aLocalMac[5] = 0xF5;
-	}
+#ifdef CFG_USE_NET
+	osal_net_init();
+#if (defined(CFG_WIZCHIP))
+	memcpy(netinfo.ip, g_aLocalIP, 4);
+	memcpy(netinfo.gw, g_aLocalGateway, 4);
+	memcpy(netinfo.sn, g_aLocalMask, 4);
+	memcpy(netinfo.mac, g_aLocalMac, 6);
+	memcpy(netinfo.dns, g_aLocalDns, 4);
+	netinfo.dhcp = NETINFO_STATIC;
 	
+	hspi = HalSpiGetInstance(HALSpiNumer1);
+	wizchip_net_Init(hspi, &netinfo);
+	vizchip_net_start(SOCK_TCP_SERVER, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+#endif //CFG_WIZCHIP
+#endif //CFG_USE_NET
+
+#if (defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 	//ESP8266初始化
-	esp8266_client_Init(hal_uart_getinstance(HAL_UART2));
-	esp8266_client_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
-	esp8266_client_setIp(g_aLocalIP, g_aLocalGateway, g_aLocalMask);//设置IP
-	esp8266_client_setMac(g_aLocalMac);//设置MAC地址
-	esp8266_client_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
-	esp8266_client_StartTransparent();//ESP8266进入透传模式
+	esp8266_client_Init(hal_uart_getinstance(HAL_UART2), TRUE);
+#endif //#if (defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 	
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT) && defined(CFG_USE_COMM_ESP8266))
 	comm_registe(comm_esp8266_client_getInstance(), COMM_CHANNEL1);
 	hComm = comm_getInstance(COMM_CHANNEL1);
 	hComm->init(esp8266_client_getinstance());
 	hComm->add_rx_obser(OnEsp8826MsgEvent);
 	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT1);
-#endif //CFG_ESP8266_CLIENT
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 	osal_router_init(&m_hRouterInstance);
-	bd_updateunit_Init(&m_hUpdateInstance);
+#endif
+
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
+	osal_updateunit_Init(&m_hUpdateInstance);
+#endif
 	
 	//创建任务
+#if (defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 	osal_task_create(taskForCheckWifiStage, 0x300000);//检查Wifi连接状态 (约 30s)
+#endif //CFG_ESP8266_CLIENT
 	
 }
 

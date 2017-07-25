@@ -14,8 +14,10 @@
  *
  */
 
-#include "stdafx.h"
+#include "osal.h"
 #include "comm3.h"
+
+#if (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_COMM3))
 
 /* Comm数据操作实例 */
 static CommTypeDef m_Instance;
@@ -479,4 +481,6 @@ CommTypeDef* comm3_getInstance(void)
 	}
 	return pthis;
 }
+
+#endif // (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_COMM3))
 

@@ -10,10 +10,10 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
+
 #include "hal_spi.h"
 
 #ifdef CFG_HAL_SPI
@@ -37,19 +37,19 @@ static void spi1_init(HALSpiMode mode, HALSpiDataSize datasize, HALSpiCPOL cpol,
  	GPIO_InitTypeDef GPIO_InitStructure;
   	SPI_InitTypeDef  SPI_InitStructure;
 
-//	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOA, ENABLE );//PORTB时钟使能 
-	RCC_APB1PeriphClockCmd(	RCC_APB2Periph_SPI1,  ENABLE );//SPI1时钟使能  	
+	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOA, ENABLE );//PORTB时钟使能 
+	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_SPI1,  ENABLE );//SPI1时钟使能  	
  
-	GPIO_InitStructure.GPIO_Pin = SPI1_SCLK | SPI1_MOSI;
+	GPIO_InitStructure.GPIO_Pin = SPI1_SCLK | SPI1_MOSI | SPI1_MISO;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //SCLK, MOSI复用推挽输出 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(SPI1_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
- 	GPIO_SetBits(SPI1_GPIO_TYPE, SPI1_SCLK | SPI1_MOSI);  //SCLK, MOSI上拉
+ 	GPIO_SetBits(SPI1_GPIO_TYPE, SPI1_SCLK | SPI1_MOSI | SPI1_MISO);  //SCLK, MOSI上拉
 
-	GPIO_InitStructure.GPIO_Pin = SPI1_MISO;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //MISO上拉输入
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(SPI1_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
+	//GPIO_InitStructure.GPIO_Pin = SPI1_MISO;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //MISO上拉输入
+	//GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	//GPIO_Init(SPI1_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
 
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;  //SPI设置为全双工模式
 	SPI_InitStructure.SPI_Mode = mode;						//设置工作模式
@@ -62,6 +62,7 @@ static void spi1_init(HALSpiMode mode, HALSpiDataSize datasize, HALSpiCPOL cpol,
 	SPI_InitStructure.SPI_CRCPolynomial = 7;				//CRC校验多项式
 	SPI_Init(SPI1, &SPI_InitStructure);
  
+	//SPI_SSOutputCmd(SPI1, ENABLE);
 	SPI_Cmd(SPI1, ENABLE);//SPI2使能
 	
 	m_bySpiInitFlag |= 0x01;
@@ -98,24 +99,24 @@ static void spi1_deInit(void)
  */
 static UINT16 spi1_readwrite(UINT16 txdata)
 {
-	UINT8 retry=0;		
+	//UINT8 retry=0;		
 	if (!(m_bySpiInitFlag & 0x01))//SPI通道未初始化
 		return 0;
 			 	
 	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET) //等待发送缓存为空
 	{
-		retry++;
-		if(retry > 200)
-			return 0;
+		//retry++;
+		//if(retry > 200)
+		//	return 0;
 	}			  
 	SPI_I2S_SendData(SPI1, txdata); //发送数据
 	
-	retry=0;
+	//retry=0;
 	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET) //等待接收缓存已满
 	{
-		retry++;
-		if(retry > 200)
-			return 0;
+		//retry++;
+		//if(retry > 200)
+		//	return 0;
 	}	  				
 	
 	return SPI_I2S_ReceiveData(SPI1); //返回接收到的数据
@@ -151,19 +152,19 @@ static void spi2_init(HALSpiMode mode, HALSpiDataSize datasize, HALSpiCPOL cpol,
  	GPIO_InitTypeDef GPIO_InitStructure;
   	SPI_InitTypeDef  SPI_InitStructure;
 
-//	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOB, ENABLE );//PORTB时钟使能 
+	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOB, ENABLE );//PORTB时钟使能 
 	RCC_APB1PeriphClockCmd(	RCC_APB1Periph_SPI2,  ENABLE );//SPI2时钟使能  	
  
-	GPIO_InitStructure.GPIO_Pin = SPI2_SCLK | SPI2_MOSI;
+	GPIO_InitStructure.GPIO_Pin = SPI2_SCLK | SPI2_MOSI | SPI2_MISO;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //SCLK, MOSI复用推挽输出 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(SPI2_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
- 	GPIO_SetBits(SPI2_GPIO_TYPE, SPI2_SCLK | SPI2_MOSI);  //SCLK, MOSI上拉
+ 	GPIO_SetBits(SPI2_GPIO_TYPE, SPI2_SCLK | SPI2_MOSI | SPI2_MISO);  //SCLK, MOSI上拉
 
-	GPIO_InitStructure.GPIO_Pin = SPI2_MISO;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //MISO上拉输入
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(SPI2_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
+	//GPIO_InitStructure.GPIO_Pin = SPI2_MISO;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //MISO上拉输入
+	//GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	//GPIO_Init(SPI2_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
 	
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;  //SPI设置为全双工模式
 	SPI_InitStructure.SPI_Mode = mode;						//设置工作模式
@@ -176,6 +177,7 @@ static void spi2_init(HALSpiMode mode, HALSpiDataSize datasize, HALSpiCPOL cpol,
 	SPI_InitStructure.SPI_CRCPolynomial = 7;				//CRC校验多项式
 	SPI_Init(SPI2, &SPI_InitStructure);
  
+	//SPI_SSOutputCmd(SPI2, ENABLE);
 	SPI_Cmd(SPI2, ENABLE);//SPI2使能
 	
 	m_bySpiInitFlag |= 0x02;
@@ -212,24 +214,24 @@ static void spi2_deInit(void)
  */
 static UINT16 spi2_readwrite(UINT16 txdata)
 {
-	UINT8 retry=0;
+	//UINT8 retry=0;
 	if (!(m_bySpiInitFlag & 0x02))//SPI通道未初始化
 		return 0;
 					 	
 	while (SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_TXE) == RESET) //等待发送缓存为空
 	{
-		retry++;
-		if(retry > 200)
-			return 0;
+		//retry++;
+		//if(retry > 200)
+		//	return 0;
 	}			  
 	SPI_I2S_SendData(SPI2, txdata); //发送数据
 	
-	retry=0;
+	//retry=0;
 	while (SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_RXNE) == RESET) //等待接收缓存不为空
 	{
-		retry++;
-		if(retry > 200)
-			return 0;
+		//retry++;
+		//if(retry > 200)
+		//	return 0;
 	}	  		
 	
 	return SPI_I2S_ReceiveData(SPI2); //返回接收到的数据
@@ -265,19 +267,19 @@ static void spi3_init(HALSpiMode mode, HALSpiDataSize datasize, HALSpiCPOL cpol,
  	GPIO_InitTypeDef GPIO_InitStructure;
   	SPI_InitTypeDef  SPI_InitStructure;
 
-//	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOB, ENABLE );//PORTB时钟使能 
+	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOB, ENABLE );//PORTB时钟使能 
 	RCC_APB1PeriphClockCmd(	RCC_APB1Periph_SPI3,  ENABLE );//SPI3时钟使能  	
  
-	GPIO_InitStructure.GPIO_Pin = SPI3_SCLK | SPI3_MOSI;
+	GPIO_InitStructure.GPIO_Pin = SPI3_SCLK | SPI3_MOSI | SPI3_MISO;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //SCLK, MOSI复用推挽输出 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(SPI3_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
- 	GPIO_SetBits(SPI3_GPIO_TYPE, SPI3_SCLK | SPI3_MOSI);  //SCLK, MOSI上拉
+ 	GPIO_SetBits(SPI3_GPIO_TYPE, SPI3_SCLK | SPI3_MOSI | SPI3_MISO);  //SCLK, MOSI上拉
 
-	GPIO_InitStructure.GPIO_Pin = SPI3_MISO;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //MISO上拉输入
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(SPI3_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
+	//GPIO_InitStructure.GPIO_Pin = SPI3_MISO;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //MISO上拉输入
+	//GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	//GPIO_Init(SPI3_GPIO_TYPE, &GPIO_InitStructure);//初始化GPIO
 	
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;  //SPI设置为全双工模式
 	SPI_InitStructure.SPI_Mode = mode;						//设置工作模式
@@ -290,6 +292,7 @@ static void spi3_init(HALSpiMode mode, HALSpiDataSize datasize, HALSpiCPOL cpol,
 	SPI_InitStructure.SPI_CRCPolynomial = 7;				//CRC校验多项式
 	SPI_Init(SPI3, &SPI_InitStructure);
  
+	//SPI_SSOutputCmd(SPI3, ENABLE);
 	SPI_Cmd(SPI3, ENABLE);//SPI3使能
 	
 	m_bySpiInitFlag |= 0x04;
@@ -326,24 +329,24 @@ static void spi3_deInit(void)
  */
 static UINT16 spi3_readwrite(UINT16 txdata)
 {
-	UINT8 retry=0;	
+	//UINT8 retry=0;	
 	if (!(m_bySpiInitFlag & 0x04))//SPI通道未初始化
 		return 0;
 	
 	while (SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) == RESET) //等待发送缓存为空
 	{
-		retry++;
-		if(retry > 200)
-			return 0;
+		//retry++;
+		//if(retry > 200)
+		//	return 0;
 	}			  
 	SPI_I2S_SendData(SPI3, txdata); //发送数据
 	
-	retry=0;
+	//retry=0;
 	while (SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) == RESET) //等待接收缓存已满
 	{
-		retry++;
-		if(retry > 200)
-			return 0;
+		//retry++;
+		//if(retry > 200)
+		//	return 0;
 	}	  			
 	
 	return SPI_I2S_ReceiveData(SPI3); //返回接收到的数据

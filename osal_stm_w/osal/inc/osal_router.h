@@ -10,7 +10,7 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 
@@ -21,6 +21,7 @@
 #include "types.h"
 #include "comm.h"
 
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 
 #define MAX_BLOCK_NAME_LEN 128	/*!< 功能模块名称最大长度，包括"\n" */
 #define MAX_BLOCK_SIZE 32 		/*!< 模块最大功能单元个数 */
@@ -141,4 +142,5 @@ UINT16 osal_router_getAddress(void);
  */
 BOOL osal_router_checkAddress(UINT16 uAddr);
 
+#endif //(defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 #endif

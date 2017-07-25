@@ -10,13 +10,11 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
-#include "hal_cpu.h"
 
-#ifdef CFG_HAL_CPU
+#include "hal_cpu.h"
 
 #define CPU_ID_LEN 12			/* CPU编号长度 */
 #define CPU_ID_ADDR 0x1ffff7e8	/* CPU编号存放地址 */
@@ -131,7 +129,7 @@ UCHAR HalCpuGetID(UCHAR* idBuf)
 }
 
 /* 看门狗喂狗线程 */
-static void FreeIWDG_task(void)
+void FreeIWDG_task(void)
 {
 	HalIwdgFred();
 }
@@ -163,9 +161,6 @@ void HalIwdgInit(UINT32 utime)
 	IWDG_ReloadCounter();  //重装载IWDG计数器
 	
 	IWDG_Enable();  //使能IWDG
-	
-	//创建喂狗线程自动喂狗
-	osal_task_create(FreeIWDG_task, 1000);
 }
 
 /**
@@ -195,7 +190,7 @@ void usleep(UINT32 nus)
 			HalIwdgFred();//看门狗喂狗
 		temp = SysTick->CTRL;
 	}
-	while((temp&0x01) &&! (temp&(1<<16)));//等待时间到达   
+	while((temp&0x01) && !(temp&(1<<16)));//等待时间到达   
 	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;       //关闭计数器
 	SysTick->VAL = 0X00;       //清空计数器	 
 }
@@ -226,4 +221,3 @@ void msleep(UINT16 nms)
 	SysTick->VAL = 0X00;       //清空计数器	  	    
 } 
 
-#endif //CFG_HAL_CPU

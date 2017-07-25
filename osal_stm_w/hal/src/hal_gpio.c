@@ -10,10 +10,10 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
+
 #include "hal_gpio.h"
 
 #ifdef CFG_HAL_GPIO

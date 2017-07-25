@@ -10,15 +10,14 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef _HAL_EXTI_H
 #define _HAL_EXTI_H
 
-#include "hal_board.h"
+#include "hal_cfg.h"
 #include "hal_types.h"
-#include "stm32f10x.h"
 
 #ifdef CFG_HAL_EXTI
 

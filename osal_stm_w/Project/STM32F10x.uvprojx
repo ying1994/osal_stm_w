@@ -306,7 +306,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x800d000</StartAddress>
-                <Size>0x43000</Size>
+                <Size>0x33000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -355,13 +355,13 @@
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER,__KEIL__</Define>
               <Undefine></Undefine>
-              <IncludePath>.\;..\core\inc;..\bsp\inc;..\hal\inc;..\osal\inc;..\driver\inc;..\comm\inc;..\functions\inc;..\BootLoader\inc;..\Application\inc</IncludePath>
+              <IncludePath>.\;..\core\inc;..\bsp\inc;..\hal\inc;..\osal\inc;..\driver\inc;..\driver\W5500;..\comm\inc;..\functions\inc;..\BootLoader\inc;..\Application\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -624,6 +624,11 @@
               <FileType>1</FileType>
               <FilePath>..\hal\src\hal_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>hal_can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hal\src\hal_can.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -659,6 +664,21 @@
               <FileType>1</FileType>
               <FilePath>..\osal\src\osal_router.c</FilePath>
             </File>
+            <File>
+              <FileName>osal_delay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\osal\src\osal_delay.c</FilePath>
+            </File>
+            <File>
+              <FileName>osal_updateunit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\osal\src\osal_updateunit.c</FilePath>
+            </File>
+            <File>
+              <FileName>osal_net.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\osal\src\osal_net.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -674,16 +694,31 @@
               <FileType>1</FileType>
               <FilePath>..\driver\src\esp8266_client.c</FilePath>
             </File>
+            <File>
+              <FileName>wizchip_net.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\driver\W5500\wizchip_net.c</FilePath>
+            </File>
+            <File>
+              <FileName>socket.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\driver\W5500\Ethernet\socket.c</FilePath>
+            </File>
+            <File>
+              <FileName>wizchip_conf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\driver\W5500\Ethernet\wizchip_conf.c</FilePath>
+            </File>
+            <File>
+              <FileName>w5500.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\driver\W5500\Ethernet\W5500\w5500.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>comm</GroupName>
           <Files>
-            <File>
-              <FileName>can.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\comm\src\can.c</FilePath>
-            </File>
             <File>
               <FileName>comm.c</FileName>
               <FileType>1</FileType>
@@ -719,11 +754,6 @@
         <Group>
           <GroupName>functionts</GroupName>
           <Files>
-            <File>
-              <FileName>updateunit.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\functions\src\updateunit.c</FilePath>
-            </File>
             <File>
               <FileName>debugunit.c</FileName>
               <FileType>1</FileType>

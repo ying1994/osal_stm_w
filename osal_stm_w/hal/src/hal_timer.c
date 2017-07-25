@@ -10,10 +10,10 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
+
 #include "hal_timer.h"
 
 #ifdef CFG_HAL_TIMER
@@ -24,7 +24,7 @@
 #define SHARE_TIMER_MAX 32
 
 /** 共享定时器基准时间 */
-#define SHARE_TIMER_BASE_TIME 50
+#define SHARE_TIMER_BASE_TIME 1
 
 /** 共享定时器起始编号 */
 #define INDE_TIMER_BASE_NUM 0
@@ -34,6 +34,8 @@
 
 /* 独立定时器初始化操作句柄原型 */
 typedef void (*HalTimeInit_t)(BOOL bIsOn, UINT32 ums);
+/* 独立定时器清零操作句柄原型 */
+typedef void (*HalTimeClear_t)(void);
 
 /** 共享定时器存储结构 */
 typedef struct
@@ -45,6 +47,7 @@ typedef struct
 
 /* 独立定时器句柄集合 */
 static HalTimerCBack_t m_hIndeTimer[INDE_TIMER_MAX] = {NULL};
+static HalTimeClear_t m_hClearTimer[INDE_TIMER_MAX] = {NULL};
 /* 共享定时器句柄集合 */
 static HAL_TIMER_TYPE m_hShareTimer[SHARE_TIMER_MAX] = {{NULL, 0}};
 static UINT16 m_uShareTimerCount = 0;
@@ -138,6 +141,12 @@ static void timer3_init(BOOL bIsOn, UINT32 ums)
 	}
 }
 
+/* 定时器3清零 */
+static void timer3_clear(void)
+{
+	TIM_SetCounter(TIM3, 0);
+}
+
 /* 定时器4初始化 */
 static void timer4_init(BOOL bIsOn, UINT32 ums)
 {
@@ -180,6 +189,12 @@ static void timer4_init(BOOL bIsOn, UINT32 ums)
 		TIM_Cmd(TIM4, DISABLE);  //禁止TIMx	
 		TIM_DeInit(TIM4);
 	}
+}
+
+/* 定时器4清零 */
+static void timer4_clear(void)
+{
+	TIM_SetCounter(TIM4, 0);
 }
 
 /* 定时器6初始化 */
@@ -225,6 +240,12 @@ static void timer6_init(BOOL bIsOn, UINT32 ums)
 	}
 }
 
+/* 定时器6清零 */
+static void timer6_clear(void)
+{
+	TIM_SetCounter(TIM6, 0);
+}
+
 /* 定时器7初始化 */
 static void timer7_init(BOOL bIsOn, UINT32 ums)
 {
@@ -267,6 +288,12 @@ static void timer7_init(BOOL bIsOn, UINT32 ums)
 		TIM_Cmd(TIM7, DISABLE);  //禁止TIMx	
 		TIM_DeInit(TIM7);
 	}
+}
+
+/* 定时器7清零 */
+static void timer7_clear(void)
+{
+	TIM_SetCounter(TIM7, 0);
 }
 
 /* 定时器2中断服务程序 */
@@ -359,6 +386,10 @@ INT32 HalSetIndeTimer(HalTimerCBack_t hTimerFunc, UINT32 ums)
 		m_hTimerInitFunc[1] = timer4_init;
 		m_hTimerInitFunc[2] = timer6_init;
 		m_hTimerInitFunc[3] = timer7_init;
+		m_hClearTimer[0] = timer3_clear;
+		m_hClearTimer[1] = timer4_clear;
+		m_hClearTimer[2] = timer6_clear;
+		m_hClearTimer[3] = timer7_clear;
 	}
 	
 	for (i = 0; i < INDE_TIMER_MAX; ++i)
@@ -457,6 +488,10 @@ void HalKillTimerWithFunc(HalTimerCBack_t hTimerFunc)
 		m_hTimerInitFunc[1] = timer4_init;
 		m_hTimerInitFunc[2] = timer6_init;
 		m_hTimerInitFunc[3] = timer7_init;
+		m_hClearTimer[0] = timer3_clear;
+		m_hClearTimer[1] = timer4_clear;
+		m_hClearTimer[2] = timer6_clear;
+		m_hClearTimer[3] = timer7_clear;
 	}
 	
 	for (i = 0; i < INDE_TIMER_MAX; ++i)
@@ -494,9 +529,11 @@ void HalKillTimerWithFunc(HalTimerCBack_t hTimerFunc)
  * @brief 通过定时器ID注销一个定时器
  * @param uID 定时器ID
  */
-void HalKillTimerWithID(UINT32 uID)
+void HalKillTimerWithID(INT32 uID)
 {
 	UINT16 i;
+	if (uID < 0)
+		return;
 	
 	if (NULL == m_hTimerInitFunc[0])
 	{
@@ -504,6 +541,10 @@ void HalKillTimerWithID(UINT32 uID)
 		m_hTimerInitFunc[1] = timer4_init;
 		m_hTimerInitFunc[2] = timer6_init;
 		m_hTimerInitFunc[3] = timer7_init;
+		m_hClearTimer[0] = timer3_clear;
+		m_hClearTimer[1] = timer4_clear;
+		m_hClearTimer[2] = timer6_clear;
+		m_hClearTimer[3] = timer7_clear;
 	}
 	
 	if (uID - INDE_TIMER_BASE_NUM < INDE_TIMER_MAX)//独立定时器
@@ -521,6 +562,85 @@ void HalKillTimerWithID(UINT32 uID)
 		m_uShareTimerCount--;
 		if (m_uShareTimerCount == 0)
 			timer2_init(FALSE, 0);
+	}
+}
+
+/**
+ * @brief 通过定时器句柄清除定时器重新计时
+ * @param hFunc 定时器回调函数句柄
+ */
+void HalClearTimerWithFunc(HalTimerCBack_t hTimerFunc)
+{
+	UINT16 i;
+	
+	if (NULL == m_hTimerInitFunc[0])
+	{
+		m_hTimerInitFunc[0] = timer3_init;
+		m_hTimerInitFunc[1] = timer4_init;
+		m_hTimerInitFunc[2] = timer6_init;
+		m_hTimerInitFunc[3] = timer7_init;
+		m_hClearTimer[0] = timer3_clear;
+		m_hClearTimer[1] = timer4_clear;
+		m_hClearTimer[2] = timer6_clear;
+		m_hClearTimer[3] = timer7_clear;
+	}
+	
+	for (i = 0; i < INDE_TIMER_MAX; ++i)
+	{
+		if (hTimerFunc == m_hIndeTimer[i])//该定时器为独立定时器
+		{
+			m_hClearTimer[i]();
+			return;
+		}
+	}
+	
+	for (i = 0; i < m_uShareTimerCount; ++i)
+	{
+		if (hTimerFunc == m_hShareTimer[i].hTimerFunc)//该定时器为共享定时器
+		{
+			break;
+		}
+	}
+	if (i < m_uShareTimerCount)
+	{
+		for (i = 0; i < m_uShareTimerCount-1; ++i)
+		{
+			m_hShareTimer[i].uCounter = 0;
+		}
+	}
+}
+
+/**
+ * @brief 通过定时器ID注销清除定时器重新计时
+ * @param uID 定时器ID
+ */
+void HalClearTimerWithID(INT32 uID)
+{
+	UINT16 i;
+	
+	if (uID < 0)
+		return;
+	
+	if (NULL == m_hTimerInitFunc[0])
+	{
+		m_hTimerInitFunc[0] = timer3_init;
+		m_hTimerInitFunc[1] = timer4_init;
+		m_hTimerInitFunc[2] = timer6_init;
+		m_hTimerInitFunc[3] = timer7_init;
+		m_hClearTimer[0] = timer3_clear;
+		m_hClearTimer[1] = timer4_clear;
+		m_hClearTimer[2] = timer6_clear;
+		m_hClearTimer[3] = timer7_clear;
+	}
+	
+	if (uID - INDE_TIMER_BASE_NUM < INDE_TIMER_MAX)//独立定时器
+	{
+		m_hClearTimer[uID - INDE_TIMER_BASE_NUM]();
+	}
+	else if (uID - SHARE_TIMER_BASE_NUM < SHARE_TIMER_MAX)//共享定时器
+	{
+		i = uID - SHARE_TIMER_BASE_NUM;
+		m_hShareTimer[i].uCounter = 0;
 	}
 }
 

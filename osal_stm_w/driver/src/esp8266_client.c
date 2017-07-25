@@ -1,5 +1,5 @@
 /**
- * @file    esp8266_client_client.c
+ * @file    esp8266_client.c
  * @author  WSF
  * @version V1.0.0
  * @date    2016.03.15
@@ -17,10 +17,10 @@
 #include "esp8266_client.h"
 #include  "hal_defs.h"
 #include  "hal_types.h"
+#include  "global.h"
 
 
-#ifdef CFG_ESP8266_CLIENT
-
+#if (defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT))
 
 /* 数据透传是否启动 */
 static BOOL m_bTransEnable = FALSE;
@@ -118,7 +118,7 @@ static BOOL WaitForReciveEx(UINT32 t)
 	return TRUE;
 }
 
-#define ESP8266_SENDCMD_TRYCNT 16
+#define ESP8266_SENDCMD_TRYCNT 10
 #define ESP8266_SENDCMD_TIME_OUT 300
 /**
  * @brief 发送命令, 并校验返回数据是否正确
@@ -161,10 +161,12 @@ static BOOL SendCmd(const char *cmd, const char *res)
 /**
  * @brief ESP8266初始化
  * @param hUart:  Uart实例句柄
+ * @param bConetServer:  是否连接服务器
  * @retval None
  */
-void esp8266_client_Init(HALUartTypeDef* hUart)
+void esp8266_client_Init(HALUartTypeDef* hUart, BOOL bConetServer)
 {
+	BOOL result = FALSE;
 	if (NULL != hUart)
 	{
 		if (m_hUart != NULL)
@@ -180,6 +182,35 @@ void esp8266_client_Init(HALUartTypeDef* hUart)
 		HalGpioWrite(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, TRUE);
 		m_hUart->init();//默认 115200, N, 8, 1
 		m_hUart->add_rx_obser(OnComm);
+		
+		esp8266_client_reset();
+		if (bConetServer)
+		{
+			result = esp8266_client_setIp(g_aLocalIP, g_aLocalGateway, g_aLocalMask);//设置IP
+			if (result)
+			{
+				esp8266_client_delay(500);
+				result = esp8266_client_setMac(g_aLocalMac);//设置MAC地址
+			}
+			
+			if (result)
+			{
+				esp8266_client_delay(500);
+				result = esp8266_client_connet_wifi(g_aSsid, g_aPwd);//连接Wifi
+			}
+			
+			if (result)
+			{
+				esp8266_client_delay(500);
+				result = esp8266_client_connet(g_aServerIp, g_uServerPort, g_bTcpConnet);//连接服务器
+			}
+			
+			if (result)
+			{
+				esp8266_client_delay(500);
+				esp8266_client_StartTransparent();//ESP8266进入透传模式
+			}
+		}
 	}
 }
 
@@ -483,7 +514,7 @@ void esp8266_client_StartTransparent(void)
 		//bCIPSend = SendCmd("AT+CIPSEND\r\n", ">");//使能透传
 		if ((uCnt1 < ESP8266_SENDCMD_TRYCNT) && (uCnt2 < ESP8266_SENDCMD_TRYCNT))
 			m_bTransEnable = TRUE;
-		DBG(TRACE("m_bTransEnable = %s\r\n", m_bTransEnable ? "TRUE" : "FALSE"));
+		//DBG(TRACE("[esp8266_client_StartTransparent] send: TransEnable = %s\r\n", m_bTransEnable ? "TRUE" : "FALSE"));
 		esp8266_client_ClrData();
 	}
 }
@@ -692,7 +723,7 @@ static void New(void)
 	m_hInstance.init = init;
 	m_hInstance.deInit = deInit;
 	m_hInstance.set_baudrate = set_baudrate;
-	m_hInstance.set_wordlength = set_wordlength;
+	m_hInstance.set_databits = set_wordlength;
 	m_hInstance.set_stopbit = set_stopbit;
 	m_hInstance.set_parity = set_parity;
 	m_hInstance.write = write;

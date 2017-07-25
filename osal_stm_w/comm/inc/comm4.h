@@ -18,6 +18,7 @@
 #include "types.h"
 #include "comm.h"
 
+#if (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_COMM4))
 
 /**
  * @brief 获取Comm操作结构句柄
@@ -27,4 +28,6 @@
 CommTypeDef* comm4_getInstance(void);
 
  
+#endif // (defined(CFG_OSAL_COMM) && defined(CFG_OSAL_COMM4))
+
 #endif //__COMM4_H_

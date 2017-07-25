@@ -10,7 +10,7 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef HAL_DEFS_H
@@ -81,9 +81,7 @@
 #ifndef GET_BIT
 #define GET_BIT(DISCS, IDX)  (((DISCS)[((IDX) / 8)] & BV((IDX) % 8)) ? TRUE : FALSE)
 #endif
-#ifndef SET_BIT
-#define SET_BIT(DISCS, IDX)  (((DISCS)[((IDX) / 8)] |= BV((IDX) % 8)))
-#endif
+
 #ifndef CLR_BIT
 #define CLR_BIT(DISCS, IDX)  (((DISCS)[((IDX) / 8)] &= (BV((IDX) % 8) ^ 0xFF)))
 #endif

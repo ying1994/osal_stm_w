@@ -10,15 +10,19 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
+#include "hal_types.h"
+#include "hal_cpu.h"
 #include "hal_iap.h"
+#include "hal_flash.h"
 #include "cortexm3_macro.h"
 
+#include "stdio.h"
 
 #ifdef CFG_HAL_IAP
+static UCHAR byFlashData[HAL_FLASH_PAGE_SIZE] = {0};
 
 /**
  * @brief App程序编程
@@ -62,43 +66,44 @@ BOOL HalIapRead(UINT32 uAddress, UCHAR *pBuff, UINT32 size)
  */
 BOOL HalIapRW_EEPROM(UINT32 uAddress, UCHAR* pBuff, UINT32 size)
 {
-	static UCHAR byFlashData[HAL_IAP_EEPROM_SIZE] = {0};
 	BOOL bRetVal = FALSE;
 	UINT32 uWriteAddr = 0;
 	UINT32 uBaseAddr = 0;
 	BOOL bValue = FALSE;
-	UINT32 i;
+	UINT32 uBufIdx = 0;
+	UINT32 uFlashIdx = 0;
 	
-	//如果写入数据地址不在EEPROM空间中
-	if (uAddress < HAL_IAP_EEPROM_ADDR) 
-		return FALSE;
-	//写入的数据量超出EEPROM的大小，不处理
-	if ((uAddress % HAL_FLASH_PAGE_SIZE) + size > HAL_IAP_EEPROM_SIZE)
-		return FALSE;
-	
-	uWriteAddr = uAddress - (uAddress % HAL_FLASH_PAGE_SIZE);
-	
-	HalFlashRead(uWriteAddr, byFlashData, HAL_IAP_EEPROM_SIZE);
-	
-	uBaseAddr = uAddress % HAL_FLASH_PAGE_SIZE;
-	for (i=0; i < size; ++i)
+	while (uBufIdx < size)
 	{
-		if (byFlashData[uBaseAddr + i] != pBuff[i])
+		uWriteAddr = uAddress - (uAddress % HAL_FLASH_PAGE_SIZE);
+		
+		HalFlashRead(uWriteAddr, byFlashData, HAL_FLASH_PAGE_SIZE);
+		
+		uBaseAddr = uAddress % HAL_FLASH_PAGE_SIZE;
+		uFlashIdx = uBaseAddr;
+		for (; (uBufIdx < size) && (uFlashIdx < HAL_FLASH_PAGE_SIZE); )
 		{
-			byFlashData[uBaseAddr + i] = pBuff[i];
-			bValue = TRUE;
-		}
-	}
-	
-	if (bValue)//数据有变化，更新EEPROM
-	{
-		if (HalFlashErase(uWriteAddr, HAL_IAP_EEPROM_SIZE))
-		{
-			if (HalFlashWrite(uWriteAddr, byFlashData, HAL_IAP_EEPROM_SIZE))
+			if (byFlashData[uFlashIdx] != pBuff[uBufIdx])
 			{
-				bRetVal = TRUE;
+				byFlashData[uFlashIdx] = pBuff[uBufIdx];
+				bValue = TRUE;
+			}
+			uFlashIdx++;
+			uBufIdx++;
+		}
+		
+		if (bValue)//数据有变化，更新EEPROM
+		{
+			if (HalFlashErase(uWriteAddr, HAL_FLASH_PAGE_SIZE))
+			{
+				if (HalFlashWrite(uWriteAddr, byFlashData, HAL_FLASH_PAGE_SIZE))
+				{
+					bRetVal = TRUE;
+				}
 			}
 		}
+		uWriteAddr += HAL_FLASH_PAGE_SIZE;
+		uAddress += uBufIdx;
 	}
 	
 	return bRetVal;

@@ -14,7 +14,7 @@
  *
  */
 
-#include "stdafx.h"
+
 #include "osal_error.h"
 
 static UINT16 m_uLastError = 0;

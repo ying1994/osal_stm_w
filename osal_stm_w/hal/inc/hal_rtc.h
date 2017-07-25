@@ -10,13 +10,13 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#ifndef HAL_RTC_H
-#define HAL_RTC_H
+#ifndef _HAL_RTC_H
+#define _HAL_RTC_H
 
-#include "hal_board.h"
+#include "hal_cfg.h"
 #include "hal_types.h"
 
 #ifdef CFG_HAL_RTC

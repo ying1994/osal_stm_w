@@ -15,11 +15,12 @@
  */
 #include "stdafx.h"
 #include "bootloader.h"
-#include "osal_error.h"
+#include "osal.h"
 
 #if ENABLE_BOOTLOADER_CODE
 
 /*****************系统升级部分 UPDATE_UNIT ********************/
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 /* 升级文件个数 */
 static UINT16 m_uUpdateFileCount = 0;
 /* 当前文件序号 */
@@ -39,6 +40,7 @@ static UINT32 m_uOffset = 0;
 static UINT16 m_uReceiveCRCValue = 0;
 /* 已接收文件大小 */
 static UINT32 m_uReceiveFileSize = 0;
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 /************* End of 系统升级部分 UPDATE_UNIT ****************/
 
 static void OnCommRouterMsg(MsgTypeDef* pMsg)
@@ -156,6 +158,7 @@ static void taskForJumpToApp(void)
 }
 
 
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 /**
  * @brief 系统开始升级消息处理
  * @param pMsg 接收到的消息句柄
@@ -395,8 +398,22 @@ static void UpdateUint_Onend(MsgTypeDef* pMsg)
 	{
 		HalIapJmp2addr(HAL_APP_BASE_ADDR);
 	}
-}	
+}
 
+/* 系统升级单元实例 */	
+static UpdateUnitCBack_t m_hUpdateInstance = 
+{
+	UpdateUint_OnStart,
+	UpdateUint_OnReady,
+	UpdateUint_OnUpdating,
+	UpdateUint_OnResult,
+	UpdateUint_OnLastResult,
+	UpdateUint_Onend
+};
+
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
+
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 /**
  * @brief 通讯结点在线事件回调函数
  * @param uChannel 产生事件通道结点地址
@@ -415,17 +432,6 @@ static void CommRouter_OnConnetEvent(UINT16 uPort, BOOL bIsConneted)
 static void CommRouter_SendMsg(MsgTypeDef* pMsg)
 {
 }
-
-/* 系统升级单元实例 */	
-static UpdateUnitCBack_t m_hUpdateInstance = 
-{
-	UpdateUint_OnStart,
-	UpdateUint_OnReady,
-	UpdateUint_OnUpdating,
-	UpdateUint_OnResult,
-	UpdateUint_OnLastResult,
-	UpdateUint_Onend
-};
 
 /* 路由单元实例 */
 static OSALRouterCBack_t m_hRouterInstance =
@@ -447,6 +453,7 @@ static void OnDebugMsgEvent(MsgTypeDef* pMsg)
 		OnDebugUnitMsgEvent(pMsg);
 	}
 }
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 
 /**
  * @brief BootLoader初始化
@@ -455,6 +462,7 @@ static void OnDebugMsgEvent(MsgTypeDef* pMsg)
  */
 void bootloader_init(void)
 {
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 	CommTypeDef* hComm = NULL;
 	//UCHAR blocks[] = {UPDATE_UNIT, DEBUG_UNIT, ROUTER_UNIT};
 	
@@ -465,10 +473,13 @@ void bootloader_init(void)
 	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT0);
 	
 	osal_router_init(&m_hRouterInstance);
-	bd_updateunit_Init(&m_hUpdateInstance);
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
+	
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
+	osal_updateunit_Init(&m_hUpdateInstance);
+#endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 	
 	//启动App跳转任务，实现App程序自动跳转执行（跳转时间为300ms）
-	//bd_timer_setShareTimer(taskForJumpToApp, 3000);
 	osal_task_create(taskForJumpToApp, 0x40000);
 }
 

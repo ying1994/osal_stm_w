@@ -19,7 +19,7 @@
 #include "hal_types.h"
 #include "hal_board.h"
 
-#include "hal_spi.h"
+#include "stdafx.h"
 
 #ifdef CFG_W25X16
 

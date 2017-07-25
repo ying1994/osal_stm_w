@@ -10,17 +10,15 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef _HAL_CPU_H
 #define _HAL_CPU_H
 
-
-#include "hal_board.h"
+#include "hal_cfg.h"
 #include "hal_types.h"
 
-#ifdef CFG_HAL_CPU
 
 /**
  * @brief: CPU资源初始化
@@ -51,6 +49,13 @@ void HalIwdgInit(UINT32 utime);
 void HalIwdgFred(void);
 
 /**
+ * @brief: 看门狗喂狗任务
+ * @param: void
+ * @retval: void
+ */
+void FreeIWDG_task(void);
+
+/**
  * @brief 微秒级延时
  * @param nus: 延时微秒数
  * @retval None
@@ -63,6 +68,5 @@ void usleep(UINT32 nus);
  * @retval None
 */
 void msleep(UINT16 nms);
-	
-#endif //CFG_HAL_CPU
+
 #endif

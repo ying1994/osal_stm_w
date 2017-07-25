@@ -13,3 +13,8 @@
  * All rights res
  *
  */
+#include "osal_time.h"
+
+void osal_time_init(void)
+{
+}

@@ -14,8 +14,10 @@
  *
  */
 
-#include "stdafx.h"
+#include "osal.h"
 #include "comm.h"
+
+#ifdef CFG_OSAL_COMM
 
 /* Comm数据操作实例 */
 static CommTypeDef m_Instance;
@@ -496,3 +498,5 @@ BOOL comm_registe(CommTypeDef* hCommHandle, CommChannelDef eChannel)
 	
 	return TRUE;
 }
+
+#endif // CFG_OSAL_COMM

@@ -14,7 +14,7 @@
  *
  */
 
-#include "stdafx.h"
+
 #include "osal_sock.h"
 
 //大小端模式判断

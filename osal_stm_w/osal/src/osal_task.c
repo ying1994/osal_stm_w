@@ -14,7 +14,7 @@
  *
  */
 
-#include "stdafx.h"
+
 #include "osal_task.h"
 
 #define OSAL_TASK_MAX 50	/** 最大任务数 */

@@ -10,9 +10,13 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
+#ifndef OSAL_TIME_H
+#define OSAL_TIME_H
 
+void osal_time_init(void);
 
- 
+#endif
+

@@ -10,7 +10,7 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #include  "hal_adc.h"
@@ -133,6 +133,7 @@ static void HalAdcDeInit (ADC_TypeDef* ADCx)
  */
 static void HalAdc0Init (void)
 {
+	HalAdcInit(ADC1);
 }
 
 /**
@@ -142,7 +143,7 @@ static void HalAdc0Init (void)
  */
 static void HalAdc0DeInit (void)
 {
-
+	HalAdcDeInit(ADC1);
 }
 
 /**

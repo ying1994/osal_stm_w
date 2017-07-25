@@ -10,13 +10,13 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef _HAL_TYPES_H
 #define _HAL_TYPES_H
 
-/* Texas Instruments CC2540 */
+#include "hal_defs.h"
 
 /* ------------------------------------------------------------------------------------------------
  *                                               Types
@@ -119,6 +119,12 @@ typedef void (*HAL_BASE_FUNC)(void);
 #define CONST const
 #endif
 
+#define TRACE printf
+#ifdef _DEBUG
+#define DBG(code) code 
+#else
+#define DBG(code)
+#endif
 /**************************************************************************************************
  */
 #endif

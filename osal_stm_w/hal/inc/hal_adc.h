@@ -10,12 +10,13 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#ifndef HAL_ADC_H
-#define HAL_ADC_H
-#include "stm32f10x.h"
+#ifndef _HAL_ADC_H
+#define _HAL_ADC_H
+
+#include "hal_cfg.h"
 #include "hal_types.h"
 #include "hal_board.h"
 

@@ -10,11 +10,14 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
+
 #include "hal_rtc.h"
+#include "hal_cpu.h"
+
+#include "string.h"
 
 #ifdef CFG_HAL_RTC
 
@@ -80,7 +83,11 @@ static time_t rtc_set_time(int year, int mon, int day, int hour, int min, int se
     seconds += (min * 60);//分钟秒钟数
     seconds += sec;
 	
-	settime(seconds);
+//    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR    | RCC_APB1Periph_BKP,ENABLE);
+//    PWR_BackupAccessCmd(ENABLE);
+
+    RTC_SetCounter(seconds);//设置RTC计数器的值
+    RTC_WaitForLastTask();    //等待最近一次对RTC寄存器的写操作完成
 	
 	return seconds;
 }
@@ -110,6 +117,8 @@ void RTC_IRQHandler(void)
  */
 int hal_rtc_init(void)
 {
+	u8 temp=0;
+	
     NVIC_InitTypeDef NVIC_InitStructure;
 	NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQn;		//RTC全局中断
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;	//先占优先级1位,从优先级3位
@@ -118,7 +127,7 @@ int hal_rtc_init(void)
 	NVIC_Init(&NVIC_InitStructure);		//根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
 	
 	//检查是不是第一次配置时钟
-	if (BKP_ReadBackupRegister(BKP_DR1) != 0xA5A5)		//从指定的后备寄存器中读出数据:读出了与写入的指定数据不相乎
+	if (BKP_ReadBackupRegister(BKP_DR1) != 0x5050)		//从指定的后备寄存器中读出数据:读出了与写入的指定数据不相乎
 	{	 			
 		RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);	//使能PWR和BKP外设时钟   
 		PWR_BackupAccessCmd(ENABLE);	//使能RTC和后备寄存器访问 
@@ -126,7 +135,11 @@ int hal_rtc_init(void)
 		RCC_LSEConfig(RCC_LSE_ON);	//设置外部低速晶振(LSE),使用外设低速晶振
 		while (RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)	//检查指定的RCC标志位设置与否,等待低速晶振就绪
 		{
+			temp++;
+			msleep(10);
 		}
+		if(temp>=250)
+			return 1;//初始化时钟失败,晶振有问题	    
 		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);		//设置RTC时钟(RTCCLK),选择LSE作为RTC时钟    
 		RCC_RTCCLKCmd(ENABLE);	//使能RTC时钟  
 		RTC_WaitForSynchro();		//等待最近一次对RTC寄存器的写操作完成
@@ -135,9 +148,8 @@ int hal_rtc_init(void)
 		RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
 		RTC_SetPrescaler(32767); //设置RTC预分频的值
 		RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
-		
 		rtc_set_time(2016, 1, 1, 0, 0, 0);  //设置时间	  
-		BKP_WriteBackupRegister(BKP_DR1, 0xA5A5);	//向指定的后备寄存器中写入用户程序数据
+		BKP_WriteBackupRegister(BKP_DR1, 0X5050);	//向指定的后备寄存器中写入用户程序数据
 	}
 	else//系统继续计时
 	{
@@ -181,7 +193,6 @@ time_t hal_rtc_get(time_t* t)
  */
 time_t settime(time_t t)
 {
-	RTC_WaitForLastTask();//等待最近一次对RTC寄存器的写操作完成
     RTC_SetCounter(t);//设置RTC计数器的值
     RTC_WaitForLastTask();    //等待最近一次对RTC寄存器的写操作完成
 	return t;

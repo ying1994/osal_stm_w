@@ -1,5 +1,5 @@
 /**
- * @file    can.c
+ * @file    hal_can.c
  * @author  WSF
  * @version V1.0.0
  * @date    2016.03.15
@@ -10,17 +10,18 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
-#include "stdafx.h"
-#include "can.h"
+#include "hal_can.h"
+
+#ifdef CFG_HAL_CAN
 
 #define CAN_PCLK 36000	// 72000/2 KHz
 
 /* CAN 类对象*/
-static CanTypeDef m_Instance[CAN_CHANNEL_SIZE];
-static CanTypeDef* m_pthis[CAN_CHANNEL_SIZE] = {NULL};
+static HALCanTypeDef m_Instance[CAN_CHANNEL_SIZE];
+static HALCanTypeDef* m_pthis[CAN_CHANNEL_SIZE] = {NULL};
 
 /* CAN 事件回调函数*/
 static CAN_RX_BASE_FUNC m_hCanRxCallBlack[CAN_CHANNEL_SIZE] = {NULL};
@@ -34,19 +35,21 @@ static UINT16 m_uFilterNumber[CAN_CHANNEL_SIZE] = {0};
 
 /* CAN1 缓冲区*/
 static UCHAR m_chCanMsgBuffer1[CAN_MSG_BUFFER_SIZE * CAN_FRAME_SIZE] = {0};
-static UINT16 m_nWritePtr1 = 0;
-static UINT16 m_nReadPtr1 = 0;
+static UINT8 m_nWritePtr1 = 0;
+static UINT8 m_nReadPtr1 = 0;
+
+static BOOL bRecvEn1 = FALSE;
 
 /* CAN2 缓冲区*/
 #ifdef STM32F10X_CL
 static UCHAR m_chCanMsgBuffer2[CAN_MSG_BUFFER_SIZE * CAN_FRAME_SIZE] = {0};
-static UINT16 m_nWritePtr2 = 0;
-static UINT16 m_nReadPtr2 = 0;
+static UINT8 m_nWritePtr2 = 0;
+static UINT8 m_nReadPtr2 = 0;
+static BOOL bRecvEn2 = FALSE;
 #endif
 
 /*********************************** CAN1 ************************************/
 
-static void taskForReadBuf1(void);
 static void enableReceive1(BOOL bIsOn);
 
 /* CAN1 初始化 */
@@ -54,6 +57,7 @@ static void init1(UINT8 eMode, UINT uBaudrate, CAN_RX_BASE_FUNC hRxFunc)
 {
 	GPIO_InitTypeDef GPIO_InitStructure; 
 
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);//使能PORTA时钟
   	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);//使能CAN1时钟	
 
     GPIO_InitStructure.GPIO_Pin = CAN1_TX;
@@ -68,11 +72,11 @@ static void init1(UINT8 eMode, UINT uBaudrate, CAN_RX_BASE_FUNC hRxFunc)
  	//CAN单元设置
 	CAN_StructInit(&CAN_InitStructure[CAN_CHANNEL1]);
  	CAN_InitStructure[CAN_CHANNEL1].CAN_TTCM = DISABLE;		//非时间触发通信模式
- 	CAN_InitStructure[CAN_CHANNEL1].CAN_ABOM = ENABLE;		//软件自动离线管理
+ 	CAN_InitStructure[CAN_CHANNEL1].CAN_ABOM = DISABLE;		//软件自动离线管理
   	CAN_InitStructure[CAN_CHANNEL1].CAN_AWUM = DISABLE;		//睡眠模式通过软件唤醒(清除CAN->MCR的SLEEP位)
   	CAN_InitStructure[CAN_CHANNEL1].CAN_NART = DISABLE;		//禁止报文自动传送
   	CAN_InitStructure[CAN_CHANNEL1].CAN_RFLM = DISABLE;		//报文不锁定,新的覆盖旧的 
-  	CAN_InitStructure[CAN_CHANNEL1].CAN_TXFP = ENABLE;		//优先级，0：由报文标识符决定 1：由写入FIFO的顺序决定
+  	CAN_InitStructure[CAN_CHANNEL1].CAN_TXFP = DISABLE;		//优先级，0：由报文标识符决定 1：由写入FIFO的顺序决定
   	CAN_InitStructure[CAN_CHANNEL1].CAN_Mode = eMode;	    //模式设置
   	//设置波特率
 	//CAN Baudrate = PCLK1 / (Prescaler * (SJW + BS1 + BS1))
@@ -96,8 +100,6 @@ static void init1(UINT8 eMode, UINT uBaudrate, CAN_RX_BASE_FUNC hRxFunc)
 	
 	
 	m_hCanRxCallBlack[CAN_CHANNEL1] = hRxFunc;
-	
-	osal_task_create(taskForReadBuf1, 1);
 }   
 
 /* CAN1 注销 */
@@ -107,7 +109,6 @@ static void deInit1(void)
 	CAN_DeInit(CAN1);
 	enableReceive1(FALSE);
 	m_hCanRxCallBlack[CAN_CHANNEL1] = NULL;
-	osal_task_kill(taskForReadBuf1);
 }
 
 /*
@@ -154,6 +155,7 @@ static void setFilterIDs1(UINT32* pIDs, UINT32 size)
 static void enableReceive1(BOOL bIsOn)
 {
    	NVIC_InitTypeDef  NVIC_InitStructure;
+	bRecvEn1 = bIsOn;
 	if (bIsOn)
 	{
 		CAN_ITConfig(CAN1,CAN_IT_FMP0,ENABLE);//FIFO0消息挂号中断允许.	
@@ -172,82 +174,6 @@ static void enableReceive1(BOOL bIsOn)
 	{
 		CAN_ITConfig(CAN1,CAN_IT_FMP0,DISABLE);//FIFO0消息挂号中断允许.	
 	}
-}
-
-/* transmit */
-static BOOL transmit1(UINT32 uIDE, UINT32 uID, UCHAR* pMsg, UINT8 len)
-{
-	UINT8 TransmitMailbox = 0;
-	UINT32 i;
-	static CanTxMsg TxMessage;
-	
-	assert_param(NULL != pIDE);
-	assert_param(NULL != pID);
-	assert_param(NULL != pMsg);
-	
-	if (len > 8)
-	{
-		len = 8;
-	}
-	
-	if (CAN_ID_EXT == uIDE)
-	{
-		TxMessage.StdId = uID;
-	}
-	else
-	{
-		TxMessage.ExtId = uID;
-	}
-	TxMessage.RTR = CAN_RTR_DATA;
-	TxMessage.IDE = uIDE;
-	TxMessage.DLC = len;
-	for (i = 0; i < len; ++i)
-	{
-		TxMessage.Data[i] = pMsg[i];
-	}
-
-	TransmitMailbox = CAN_Transmit(CAN1, &TxMessage);
-	
-	i = 0;
-	while((CAN_TransmitStatus(CAN1, TransmitMailbox) != CANTXOK) && (i <= 0xFFFF))
-	{
-		i++;
-	}
-	if (i >= 0xFFFF)
-		return FALSE;
-
-	return TRUE;
-}
-
-/* receive */
-static UINT8 receive1(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg)
-{
-	UINT32 i;
-	CanRxMsg RxMessage;
-	
-	assert_param(NULL != pIDE);
-	assert_param(NULL != pID);
-	assert_param(NULL != pMsg);
-	
-    if( CAN_MessagePending(CAN1,CAN_FIFO0)==0)//没有接收到数据,直接退出 
-		return 0;		
-	
-    CAN_Receive(CAN1, CAN_FIFO0, &RxMessage);//读取数据	
-	
-	*pIDE = RxMessage.IDE;
-	if (CAN_ID_EXT == RxMessage.IDE)
-	{
-		*pID = RxMessage.ExtId;
-	}
-	else
-	{
-		*pID = RxMessage.StdId;
-	}
-    for(i=0;i<8;i++)
-	{
-		pMsg[i]=RxMessage.Data[i]; 
-	}
-	return RxMessage.DLC;
 }
 
 /* 写缓冲区 */
@@ -275,10 +201,10 @@ static void writeBuf1(UINT32 uIDE, UINT32 uID, UCHAR* pMsg, UINT8 len)
 	for (i = 0; i < len; i++)
 		m_chCanMsgBuffer1[uIndex++] = pMsg[i];
 	
-	m_nWritePtr1++;
+	m_nWritePtr1 = (m_nWritePtr1 + 1) %CAN_MSG_BUFFER_SIZE;
 	if (m_nWritePtr1 == m_nReadPtr1)
 	{
-		m_nReadPtr1++;
+		m_nReadPtr1 = (m_nReadPtr1 + 1) %CAN_MSG_BUFFER_SIZE;
 	}
 }
 
@@ -313,26 +239,85 @@ static UINT8 readBuf1(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg)
 	for (i = 0; i < len; i++)
 		pMsg[i] = m_chCanMsgBuffer1[uIndex++];
 	
-	m_nReadPtr1++;
+	m_nReadPtr1 = (m_nReadPtr1 + 1) %CAN_MSG_BUFFER_SIZE;
 	
 	return len;
 }
 
-/* CAN1 缓冲区消息解析线程 */
-static void taskForReadBuf1(void)
+/* transmit */
+static BOOL transmit1(UINT32 uIDE, UINT32 uID, UCHAR* pMsg, UINT8 len)
 {
-	static UINT32 uIDE;
-	static UINT32 uID;
-	static UCHAR pMsg[8];
-	static UINT8 len;
+	UINT8 TransmitMailbox = 0;
+	UINT32 i;
+	CanTxMsg TxMessage;
 	
-	len = readBuf1(&uIDE, &uID, pMsg);
-	if (len > 0)
+	if (NULL == pMsg)
+		return FALSE;
+	
+	if (len > 8)
 	{
-		if (m_hCanRxCallBlack[CAN_CHANNEL1] != NULL)
+		len = 8;
+	}
+	
+	TxMessage.StdId = uID;
+	TxMessage.ExtId = uID;
+	
+	TxMessage.RTR = CAN_RTR_DATA;
+	TxMessage.IDE = uIDE;
+	TxMessage.DLC = len;
+	for (i = 0; i < len; ++i)
+	{
+		TxMessage.Data[i] = pMsg[i];
+	}
+
+	TransmitMailbox = CAN_Transmit(CAN1, &TxMessage);
+	
+	i = 0;
+	while((CAN_TransmitStatus(CAN1, TransmitMailbox) == CAN_TxStatus_Failed) && (i <= 0xFFF))
+	{
+		i++;
+	}
+	if (i >= 0xFFF)
+		return FALSE;
+
+	return TRUE;
+}
+
+/* receive */
+static UINT8 receive1(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg)
+{
+	if (!bRecvEn1)
+	{
+		UINT32 i;
+		CanRxMsg RxMessage;
+		
+		assert_param(NULL != pIDE);
+		assert_param(NULL != pID);
+		assert_param(NULL != pMsg);
+		
+		if( CAN_MessagePending(CAN1,CAN_FIFO0)==0)//没有接收到数据,直接退出 
+			return 0;		
+		
+		CAN_Receive(CAN1, CAN_FIFO0, &RxMessage);//读取数据	
+		
+		*pIDE = RxMessage.IDE;
+		if (CAN_ID_EXT == RxMessage.IDE)
 		{
-			m_hCanRxCallBlack[CAN_CHANNEL1](uIDE, uID, pMsg, len);
+			*pID = RxMessage.ExtId;
 		}
+		else
+		{
+			*pID = RxMessage.StdId;
+		}
+		for(i=0;i<8;i++)
+		{
+			pMsg[i]=RxMessage.Data[i]; 
+		}
+		return RxMessage.DLC;
+	}
+	else
+	{
+		return readBuf1(pIDE, pID, pMsg);
 	}
 }
 
@@ -354,19 +339,19 @@ void USB_LP_CAN1_RX0_IRQHandler (void)
 {
   	CanRxMsg RxMessage;
 	
-	if (CAN_GetITStatus(CAN1, CAN_IT_FMP0) == SET)//FIFO0消息挂号
-	{
-		CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);
-	}
-	else if (CAN_GetITStatus(CAN1, CAN_IT_FOV0) == SET)//FIFO0溢出
-	{
-		CAN_ClearITPendingBit(CAN1, CAN_IT_FOV0);
-	}
-	else if (CAN_GetITStatus(CAN1, CAN_IT_BOF) == SET)//进入离线状态
-	{
-		CAN_ClearITPendingBit(CAN1, CAN_IT_BOF);
-	}
-	else
+	//if (CAN_GetITStatus(CAN1, CAN_IT_FMP0) == SET)//FIFO0消息挂号
+	//{
+	//	CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);
+	//}
+	//else if (CAN_GetITStatus(CAN1, CAN_IT_FOV0) == SET)//FIFO0溢出
+	//{
+	//	CAN_ClearITPendingBit(CAN1, CAN_IT_FOV0);
+	//}
+	//else if (CAN_GetITStatus(CAN1, CAN_IT_BOF) == SET)//进入离线状态
+	//{
+	//	CAN_ClearITPendingBit(CAN1, CAN_IT_BOF);
+	//}
+	//else
 	{
 		CAN_Receive(CAN1, 0, &RxMessage);
 		if (m_hCanRxCallBlack[CAN_CHANNEL1] != NULL)
@@ -379,6 +364,11 @@ void USB_LP_CAN1_RX0_IRQHandler (void)
 			{
 				writeBuf1(RxMessage.IDE, RxMessage.StdId, RxMessage.Data, RxMessage.DLC);
 			}
+			
+			if (m_hCanRxCallBlack[CAN_CHANNEL1] != NULL)
+			{
+				m_hCanRxCallBlack[CAN_CHANNEL1](RxMessage.DLC);
+			}
 		}
 	}
 }
@@ -387,7 +377,6 @@ void USB_LP_CAN1_RX0_IRQHandler (void)
 /***************************** CAN2 *****************************************/
 #ifdef STM32F10X_CL
 
-static void taskForReadBuf2(void);
 static void enableReceive2(BOOL bIsOn);
 
 /* CAN2初始化 */
@@ -395,6 +384,7 @@ static void init2(UINT8 eMode, UINT32 uBaudrate, CAN_RX_BASE_FUNC hRxFunc)
 {
 	GPIO_InitTypeDef GPIO_InitStructure; 
 
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);//使能PORTB时钟
   	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, ENABLE);//使能CAN1时钟	
 
     GPIO_InitStructure.GPIO_Pin = CAN2_TX;
@@ -497,6 +487,7 @@ static void setFilterIDs2(UINT32* pIDs, UINT32 size)
 static void enableReceive2(BOOL bIsOn)
 {
    	NVIC_InitTypeDef  NVIC_InitStructure;
+	bRecvEn2 = bIsOn;
 	if (bIsOn)
 	{
 		CAN_ITConfig(CAN2,CAN_IT_FMP0,ENABLE);//FIFO0消息挂号中断允许.	
@@ -512,80 +503,6 @@ static void enableReceive2(BOOL bIsOn)
 	{
 		CAN_ITConfig(CAN2,CAN_IT_FMP0,DISABLE);//FIFO0消息挂号中断允许.	
 	}
-}
-
-/* transmit */
-static BOOL transmit2(UINT32 uIDE, UINT32 uID, UCHAR* pMsg, UINT8 len)
-{
-	UINT8 TransmitMailbox = 0;
-	UINT32 i;
-	static CanTxMsg TxMessage;
-	
-	assert_param(NULL != pMsg);
-	
-	if (len > 8)
-	{
-		len = 8;
-	}
-	
-	if (CAN_ID_EXT == uIDE)
-	{
-		TxMessage.StdId = uID;
-	}
-	else
-	{
-		TxMessage.ExtId = uID;
-	}
-	TxMessage.RTR = CAN_RTR_DATA;
-	TxMessage.IDE = uIDE;
-	TxMessage.DLC = len;
-	for (i = 0; i < len; ++i)
-	{
-		TxMessage.Data[i] = pMsg[i];
-	}
-
-	TransmitMailbox = CAN_Transmit(CAN2, &TxMessage);
-	
-	i = 0;
-	while((CAN_TransmitStatus(CAN2, TransmitMailbox) != CANTXOK) && (i <= 0xFFFF))
-	{
-		i++;
-	}
-	if (i >= 0xFFFF)
-		return FALSE;
-
-	return TRUE;
-}
-
-/* receive */
-static UINT8 receive2(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg)
-{
-	UINT32 i;
-	CanRxMsg RxMessage;
-	
-	assert_param(NULL != pIDE);
-	assert_param(NULL != pID);
-	assert_param(NULL != pMsg);
-	
-    if( CAN_MessagePending(CAN2,CAN_FIFO0)==0)//没有接收到数据,直接退出 
-		return 0;		
-	
-    CAN_Receive(CAN2, CAN_FIFO0, &RxMessage);//读取数据	
-    
-	*pIDE = RxMessage.IDE;
-	if (CAN_ID_EXT == RxMessage.IDE)
-	{
-		*pID = RxMessage.ExtId;
-	}
-	else
-	{
-		*pID = RxMessage.StdId;
-	}
-    for(i=0;i<8;i++)
-	{
-		pMsg[i]=RxMessage.Data[i]; 
-	}
-	return RxMessage.DLC;
 }
 
 /* 写缓冲区 */
@@ -656,21 +573,85 @@ static UINT8 readBuf2(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg)
 	return len;
 }
 
-/* CAN2 缓冲区消息解析线程 */
-static void taskForReadBuf2(void)
+/* transmit */
+static BOOL transmit2(UINT32 uIDE, UINT32 uID, UCHAR* pMsg, UINT8 len)
 {
-	static UINT32 uIDE;
-	static UINT32 uID;
-	static UCHAR pMsg[8];
-	static UINT8 len;
+	UINT8 TransmitMailbox = 0;
+	UINT32 i;
+	CanTxMsg TxMessage;
 	
-	len = readBuf2(&uIDE, &uID, pMsg);
-	if (len > 0)
+	if (NULL == pMsg)
+		return FALSE;
+	
+	if (len > 8)
 	{
-		if (m_hCanRxCallBlack[CAN_CHANNEL2] != NULL)
+		len = 8;
+	}
+	
+	if (CAN_ID_EXT == uIDE)
+	{
+		TxMessage.StdId = uID;
+	}
+	else
+	{
+		TxMessage.ExtId = uID;
+	}
+	TxMessage.RTR = CAN_RTR_DATA;
+	TxMessage.IDE = uIDE;
+	TxMessage.DLC = len;
+	for (i = 0; i < len; ++i)
+	{
+		TxMessage.Data[i] = pMsg[i];
+	}
+
+	TransmitMailbox = CAN_Transmit(CAN2, &TxMessage);
+	
+	i = 0;
+	while((CAN_TransmitStatus(CAN2, TransmitMailbox) == CAN_TxStatus_Failed) && (i <= 0xFFF))
+	{
+		i++;
+	}
+	if (i >= 0xFFF)
+		return FALSE;
+
+	return TRUE;
+}
+
+/* receive */
+static UINT8 receive2(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg)
+{
+	if (!bRecvEn2)
+	{
+		UINT32 i;
+		CanRxMsg RxMessage;
+		
+		assert_param(NULL != pIDE);
+		assert_param(NULL != pID);
+		assert_param(NULL != pMsg);
+		
+		if( CAN_MessagePending(CAN2,CAN_FIFO0)==0)//没有接收到数据,直接退出 
+			return 0;		
+		
+		CAN_Receive(CAN2, CAN_FIFO0, &RxMessage);//读取数据	
+		
+		*pIDE = RxMessage.IDE;
+		if (CAN_ID_EXT == RxMessage.IDE)
 		{
-			m_hCanRxCallBlack[CAN_CHANNEL2](uIDE, uID, pMsg, len);
+			*pID = RxMessage.ExtId;
 		}
+		else
+		{
+			*pID = RxMessage.StdId;
+		}
+		for(i=0;i<8;i++)
+		{
+			pMsg[i]=RxMessage.Data[i]; 
+		}
+		return RxMessage.DLC;
+	}
+	else
+	{
+		return readBuf2(pIDE, pID, pMsg);
 	}
 }
 
@@ -684,19 +665,19 @@ void CAN2_RX0_IRQHandler(void)
 {
   	CanRxMsg RxMessage;
 	
-	if (CAN_GetITStatus(CAN2, CAN_IT_FMP0) == SET)//FIFO0消息挂号
-	{
-		CAN_ClearITPendingBit(CAN2, CAN_IT_FMP0);
-	}
-	else if (CAN_GetITStatus(CAN2, CAN_IT_FOV0) == SET)//FIFO0溢出
-	{
-		CAN_ClearITPendingBit(CAN2, CAN_IT_FOV0);
-	}
-	else if (CAN_GetITStatus(CAN2, CAN_IT_BOF) == SET)//进入离线状态
-	{
-		CAN_ClearITPendingBit(CAN2, CAN_IT_BOF);
-	}
-	else
+	//if (CAN_GetITStatus(CAN2, CAN_IT_FMP0) == SET)//FIFO0消息挂号
+	//{
+	//	CAN_ClearITPendingBit(CAN2, CAN_IT_FMP0);
+	//}
+	//else if (CAN_GetITStatus(CAN2, CAN_IT_FOV0) == SET)//FIFO0溢出
+	//{
+	//	CAN_ClearITPendingBit(CAN2, CAN_IT_FOV0);
+	//}
+	//else if (CAN_GetITStatus(CAN2, CAN_IT_BOF) == SET)//进入离线状态
+	//{
+	//	CAN_ClearITPendingBit(CAN2, CAN_IT_BOF);
+	//}
+	//else
 	{
 		CAN_Receive(CAN2, 0, &RxMessage);
 		if (m_hCanRxCallBlack[CAN_CHANNEL2] != NULL)
@@ -708,6 +689,11 @@ void CAN2_RX0_IRQHandler(void)
 			else
 			{
 				writeBuf2(RxMessage.IDE, RxMessage.StdId, RxMessage.Data, RxMessage.DLC);
+			}
+			
+			if (m_hCanRxCallBlack[CAN_CHANNEL2] != NULL)
+			{
+				m_hCanRxCallBlack[CAN_CHANNEL2](RxMessage.DLC);
 			}
 		}
 	}
@@ -748,7 +734,7 @@ void New(CAN_CHANNEL eChannel)
 	}
 }
 
-CanTypeDef* can_getInstance(CAN_CHANNEL eChannel)
+HALCanTypeDef* hal_can_getInstance(CAN_CHANNEL eChannel)
 {
 	if (NULL == m_pthis[eChannel])
 	{
@@ -757,4 +743,4 @@ CanTypeDef* can_getInstance(CAN_CHANNEL eChannel)
 	return m_pthis[eChannel];
 }
 
-
+#endif //CFG_HAL_CAN

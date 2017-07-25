@@ -10,13 +10,13 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef _HAL_TIMER_H
 #define _HAL_TIMER_H
 
-#include "hal_board.h"
+#include "hal_cfg.h"
 #include "hal_types.h"
 
 #ifdef CFG_HAL_TIMER
@@ -39,8 +39,8 @@ INT32 HalSetIndeTimer(HalTimerCBack_t hTimerFunc, UINT32 ums);
 
 /**
  * @brief 注册一个共享定时器
- * @param hFunc 共享定时器回调函数句柄
- * @param time  定时时间长度（单位：ms）
+ * @param hTimerFunc 共享定时器回调函数句柄
+ * @param ums  定时时间长度（单位：20ms）
  * @retval 注册成功返回当前定时器编号，失败返回-1
  */
 INT32 HalSetShareTimer(HalTimerCBack_t hTimerFunc, UINT32 ums);
@@ -55,7 +55,19 @@ void HalKillTimerWithFunc(HalTimerCBack_t hTimerFunc);
  * @brief 通过定时器ID注销一个定时器
  * @param uID 定时器ID
  */
-void HalKillTimerWithID(UINT32 uID);
+void HalKillTimerWithID(INT32 uID);
+
+/**
+ * @brief 通过定时器句柄清除定时器重新计时
+ * @param hFunc 定时器回调函数句柄
+ */
+void HalClearTimerWithFunc(HalTimerCBack_t hTimerFunc);
+
+/**
+ * @brief 通过定时器ID注销清除定时器重新计时
+ * @param uID 定时器ID
+ */
+void HalClearTimerWithID(INT32 uID);
 
 #endif //CFG_HAL_TIMER
 #endif

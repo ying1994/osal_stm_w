@@ -21,64 +21,71 @@
 #include "stdlib.h"
 #include "string.h"
 
-#define _DEBUG
+/* hal driver resource */
+#include "hal_board.h"
+
+/* osal resource */
+#include "osal.h"
 
 #define TRACE printf
-
-#ifdef _DEBUG
-#define DBG(code) code 
-#else
-#define DBG(code)
-#endif
 
 
 #define ENABLE_BOOTLOADER_CODE 0
 
 #define BOOTLOADER_VERSION "BootLoader V1.0.0"
+#define APPLICATION_VERSION "Appliction V1.0.0"
 
 #ifdef _DEBUG
 	#if ENABLE_BOOTLOADER_CODE
 		#define FRIMWARE_VERSION BOOTLOADER_VERSION
 	#else
-		#define FRIMWARE_VERSION "ApplicationVersion_Dbg"
+		#define FRIMWARE_VERSION APPLICATION_VERSION" Dbg"
 	#endif
 #else
 	#if ENABLE_BOOTLOADER_CODE
 		#define FRIMWARE_VERSION BOOTLOADER_VERSION
 	#else
-		#define FRIMWARE_VERSION "ApplicationVersion"
+		#define FRIMWARE_VERSION APPLICATION_VERSION
 	#endif
 #endif
 
+/* driver resource define */
+//#define CFG_USE_NET
+
+/* wifi configure */
+#ifdef CFG_USE_NET
+#define CFG_USE_WIFI
+#endif //CFG_USE_NET
+
+/* WIZCHIP driver configure, for W5100, W5500 .etc */
+#ifdef CFG_USE_NET
+#define CFG_WIZCHIP
+#endif //CFG_USE_NET
+
+/* ESP8266 driver configure */
+#ifdef CFG_USE_WIFI
+#define CFG_ESP8266_CLIENT
+#endif //CFG_USE_WIFI
+
+/* comm on ESP8266 configure */
+#ifdef CFG_ESP8266_CLIENT
+#define CFG_USE_COMM_ESP8266
+#endif //CFG_USE_WIFI
+
+/* HT1621 driver configure */
+//#define CFG_HT1621B
+/* SHT2x driver configure, for HST20, HST21 .etc */
+//#define CFG_SHT2X
+
+
 /* hal driver resource */
-#include "hal_cpu.h"
-#include "hal_exti.h"
-#include "hal_gpio.h"
-#include "hal_i2c.h"
-#include "hal_spi.h"
-#include "hal_uart.h"
-#include "hal_timer.h"
-#include "hal_flash.h"
-#include "hal_iap.h"
-#include "hal_crc.h"
-#include "hal_rtc.h"
+#include "hal_board.h"
 
 /* osal resource */
 #include "osal.h"
-#include "osal_sock.h"
-#include "osal_task.h"
-#include "osal_router.h"
-
-
 
 /* proctrol resource */
-#include "unit.h"
-#include "function.h"
-#include "optype.h"
-
-
-/* UpdateUnit */
-#include "updateunit.h"
+#include "comm.h"
 
 /* DebugUnit */
 #include "debugunit.h"

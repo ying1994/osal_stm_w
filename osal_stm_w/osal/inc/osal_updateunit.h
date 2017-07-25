@@ -10,15 +10,17 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 
 #ifndef UPDATEUNIT_H
 #define UPDATEUNIT_H
 
-#include "types.h"
+#include "osal.h"
 #include "comm.h"
+
+#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 
 /**
  * @brief 系统升级单元相关回调函数集
@@ -68,13 +70,14 @@ typedef struct _HAL_UPDATE_BASE_CLASS
  * @param pMsg 接收消息处理句柄
  * @return void
  */
-void bd_updateunit_OnCommMsg(MsgTypeDef* pMsg);
+void osal_updateunit_OnCommMsg(MsgTypeDef* pMsg);
 
 /**
  * @brief 系统升级单元初始化
  * @param pMsg 接收消息处理句柄
  * @return void
  */
-void bd_updateunit_Init(UpdateUnitCBack_t *hCallBacks);
+void osal_updateunit_Init(UpdateUnitCBack_t *hCallBacks);
 
+#endif // (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 #endif

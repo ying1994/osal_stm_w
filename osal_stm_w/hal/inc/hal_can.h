@@ -1,5 +1,5 @@
 /**
- * @file    can.h
+ * @file    hal_can.h
  * @author  WSF
  * @version V1.0.0
  * @date    2016.03.15
@@ -10,12 +10,15 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef CAN_H
 #define CAN_H
-#include "types.h"
+#include "hal_cfg.h"
+#include "hal_types.h"
+
+#ifdef CFG_HAL_CAN
 
 /** CAN1端口定义 */
 #define CAN1_GPIO_TYPE	GPIOA
@@ -65,14 +68,11 @@ typedef enum
 }CAN_BAUDRATE;
 
 /**
- * @brief CAN 回调函数
- * @param uIDE: 帧类型标识符（标准帧或扩展帧）
- * @param uID: 数据帧标识符
- * @param pMsg: 数据帧内容
- * @param size: 数据帧大小
+ * @brief CAN 回调函数, 用于通知上层应用有CAN数据接收。
+ * @param size CAN接收到的数据大小
  * @retval None
  */
-typedef void (*CAN_RX_BASE_FUNC)(UINT32 uIDE, UINT32 uID, UCHAR* pMsg, UINT8 size);
+typedef void (*CAN_RX_BASE_FUNC)(UINT8 size);
 
 /**
  * @brief CAN操作结构定义
@@ -136,13 +136,14 @@ typedef struct _CanTypeDef
 	 */
 	UINT8 (*receive)(UINT32 *pIDE, UINT32 *pID, UCHAR* pMsg);
 	
-}CanTypeDef;
+}HALCanTypeDef;
 
 /**
  * @brief 获取CAN操作结构句柄
  * @param eChennal: CAN通道枚举 @ref CAN_CHANNEL
  * @retval CAN操作结构句柄
  */
-CanTypeDef* can_getInstance(CAN_CHANNEL eChannel);
+HALCanTypeDef* hal_can_getInstance(CAN_CHANNEL eChannel);
 
+#endif //CFG_HAL_CAN
 #endif

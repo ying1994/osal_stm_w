@@ -10,13 +10,13 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef _HAL_UART_H
 #define _HAL_UART_H
 
-#include "hal_board.h"
+#include "hal_cfg.h"
 #include "hal_types.h"
 
 #ifdef CFG_HAL_UART
@@ -113,7 +113,7 @@ typedef struct _HALUartTypeDef
 	 * @param wordlength: 串口通讯字长
 	 * @retval: void
 	 */
-	void (*set_wordlength)(UINT16 wordlength);
+	void (*set_databits)(UINT16 databits);
 	
 	/**
 	 * @brief: 设置串口通讯停止位
@@ -130,8 +130,15 @@ typedef struct _HALUartTypeDef
 	void (*set_parity)(UINT16 parity);
 	
 	/**
+	 * @brief: 向串口读取一组数据
+	 * @param pdata: 数据存储地址指针
+	 * @param len: 读取的数据长度
+	 * @retval: 实际读取的数据长度
+	 */
+	UINT16 (*read)(UCHAR *pdata, UINT16 len);
+	/**
 	 * @brief: 向串口写入一组数据
-	 * @param *pdata: 写入数据存储地址指针
+	 * @param pdata: 写入数据存储地址指针
 	 * @param len: 写入数据长度
 	 * @retval: void
 	 */

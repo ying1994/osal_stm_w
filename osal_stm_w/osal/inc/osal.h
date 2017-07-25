@@ -10,26 +10,29 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef OSAL_H
 #define OSAL_H
+
+#include "stm32f10x.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+
 #include "types.h"
 
-/**
- * @brief 延时函数
- * @param nus:  延时时间(单位: us)
- * @retval None
- */
-void delay_us(UINT32 nus);
+#include "osal_cfg.h"
 
-/**
- * @brief 延时函数
- * @param nus:  延时时间(单位: ms), 最大值: 1864
- * @retval None
- */
-void delay_ms(UINT32 nms);
+#include "osal_delay.h"
+#include "osal_error.h"
+#include "osal_sock.h"
+#include "osal_task.h"
+#include "osal_time.h"
 
+#include "osal_router.h"
+
+#include "osal_updateunit.h"
 
 #endif //OSAL_H

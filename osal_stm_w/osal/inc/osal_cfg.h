@@ -10,13 +10,19 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights res
+ * All rights Reserved
  *
  */
 #ifndef OSAL_STM_W_CFG_H
 #define OSAL_STM_W_CFG_H
-#include "types.h"
-#include "hal_flash.h"
+
+#define CFG_OSAL_COMM
+#define CFG_OSAL_COMM2
+#define CFG_OSAL_COMM3
+#define CFG_OSAL_COMM4
+#define CFG_OSAL_COMM5
+#define CFG_OSAL_ROUTER
+#define CFG_OSAL_UPDATEUNIT
 
 
 /**
@@ -25,8 +31,10 @@
 #define APP_DEVICE_ADDRESS_ADDR (HAL_FLASH_EEPROM_ADDR)	/*!< 通讯地址存储地址 */
 #define APP_DEVICE_ADDRESS_SIZE 4UL						/*!< 通讯地址存储大小 */
 
+#define APP_DEVICE_KIND_ADDR (APP_DEVICE_ADDRESS_ADDR + APP_DEVICE_ADDRESS_SIZE)	/*!< 设备类型 存储地址 */ 
+#define APP_DEVICE_KIND_SIZE (2UL) 												/*!< 设备类型 存储大小*/ 
 
-#define WIFI_SSID_ADDR (APP_DEVICE_ADDRESS_ADDR + APP_DEVICE_ADDRESS_SIZE)	/*!< WiFi 名称 存储地址 */ 
+#define WIFI_SSID_ADDR (APP_DEVICE_KIND_ADDR + APP_DEVICE_KIND_SIZE)	/*!< WiFi 名称 存储地址 */ 
 #define WIFI_SSID_SIZE (64UL) 												/*!< WiFi 名称 存储大小*/ 
 #define WIFI_PWD_ADDR (WIFI_SSID_ADDR + WIFI_SSID_SIZE)						/*!< WiFi 密码 存储地址 */ 
 #define WIFI_PWD_SIZE (64UL) 												/*!< WiFi 密码 存储大小*/ 
@@ -46,4 +54,7 @@
 #define WIFI_LOCAL_MASK_SIZE (4UL) 											/*!< 掩码 存储大小*/ 
 #define WIFI_LOCAL_MAC_ADDR (WIFI_LOCAL_MASK_ADDR + WIFI_LOCAL_MASK_SIZE)	/*!< MAC地址 存储地址 */ 
 #define WIFI_LOCAL_MAC_SIZE (6UL) 											/*!< MAC地址 存储大小*/ 
+#define WIFI_LOCAL_DNS_ADDR (WIFI_LOCAL_MAC_ADDR + WIFI_LOCAL_MAC_SIZE)		/*!< DNSμ??· ′?′￠μ??· */ 
+#define WIFI_LOCAL_DNS_SIZE (6UL) 											/*!< DNSμ??· ′?′￠′óD?*/ 
+
 #endif //OSAL_STM_W_CFG_H
