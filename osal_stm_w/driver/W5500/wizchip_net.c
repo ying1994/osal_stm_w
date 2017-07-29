@@ -505,9 +505,10 @@ static void taskForUdpClient(void)
  * @brief W5500 初始化
  * @param hspi SPI接口操作句柄
  * @param netinfo 网络相关信息，如IP、Gateway、MAC ......
+ * @param bSetNet 是否重新设置网络参数
  * @retval 初始化成功返回0, 否则返回-1
  */
-int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo)
+int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo, BOOL bSetNet)
 {
 	UINT8 tmpstr[16];
 	uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};	
@@ -546,7 +547,8 @@ int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo)
 			 return -1;
 		}
 		
-		ctlnetwork(CN_SET_NETINFO, (void*)netinfo);
+		if (bSetNet)
+			ctlnetwork(CN_SET_NETINFO, (void*)netinfo);
 		ctlnetwork(CN_GET_NETINFO, (void*)netinfo);
 		ctlwizchip(CW_GET_ID,(void*)tmpstr);
 		DBG(TRACE("\r\n=== %s NET CONF ===\r\n",(char*)tmpstr));

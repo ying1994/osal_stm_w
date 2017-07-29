@@ -49,9 +49,10 @@
  * @brief W5500 初始化
  * @param hspi SPI接口操作句柄
  * @param netinfo 网络相关信息，如IP、Gateway、MAC ......
+ * @param bSetNet 是否重新设置网络参数
  * @retval 初始化成功返回0, 否则返回-1
  */
-int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo);
+int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo, BOOL bSetNet);
 
 /**
  * @brief W5500 资源释放

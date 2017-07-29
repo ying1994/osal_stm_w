@@ -245,7 +245,7 @@ void application_init(void)
 	netinfo.dhcp = NETINFO_STATIC;
 	
 	hspi = HalSpiGetInstance(HALSpiNumer1);
-	wizchip_net_Init(hspi, &netinfo);
+	wizchip_net_Init(hspi, &netinfo, TRUE);
 	vizchip_net_start(SOCK_TCP_SERVER, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
 #endif //CFG_WIZCHIP
 #endif //CFG_USE_NET
