@@ -21,6 +21,17 @@
 
 #ifdef CFG_HAL_TIMER
 
+typedef enum
+{
+	INDE_TIMER_TIM1 = 0,
+	INDE_TIMER_TIM2,
+	INDE_TIMER_TIM3,
+	INDE_TIMER_TIM4,
+	INDE_TIMER_TIM5,
+	INDE_TIMER_TIM6,
+	INDE_TIMER_TIM8,
+	INDE_TIMER_MAX  /** 独立定时器最大个数 */
+}HalIndeTimerIDsTypeDef;
 
 /**
  * @brief 独立定时器回调函数原型
@@ -31,16 +42,17 @@
 
 /**
  * @brief 注册一个独立定时器
+ * @param tID 定时器ID @ref IndeTimerIDsTypeDef
  * @param hFunc 共享定时器回调函数句柄
- * @param time  定时时间长度（单位：ms）
+ * @param time  定时时间长度（单位：us）
  * @retval 注册成功返回当前定时器编号，失败返回-1
  */
-INT32 HalSetIndeTimer(HalTimerCBack_t hTimerFunc, UINT32 ums);
+INT32 HalSetIndeTimer(UINT32 tID, HalTimerCBack_t hTimerFunc, UINT32 uus);
 
 /**
  * @brief 注册一个共享定时器
  * @param hTimerFunc 共享定时器回调函数句柄
- * @param ums  定时时间长度（单位：20ms）
+ * @param ums  定时时间长度（单位：ms）
  * @retval 注册成功返回当前定时器编号，失败返回-1
  */
 INT32 HalSetShareTimer(HalTimerCBack_t hTimerFunc, UINT32 ums);
