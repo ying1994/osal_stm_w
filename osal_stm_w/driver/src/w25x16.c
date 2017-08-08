@@ -57,7 +57,7 @@ int w25x16_Init(HALSpiTypeDef *hspi)
 	
 	HalGpioInit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, HAL_GPIOMode_Out_PP);
 	
-	hspi->init(HALSpiMode_Master, HALSpiDataSize_8b, HALSpiCPOL_High, HALSpiCPHA_1Edge, HALSpiBaudRate_128, HALSpiFirstBit_MSB);
+	hspi->init(HALSpiMode_Master, HALSpiDataSize_8b, HALSpiCPOL_High, HALSpiCPHA_2Edge, HALSpiBaudRate_128, HALSpiFirstBit_MSB);
 	
 	m_hspi = hspi;
 	
