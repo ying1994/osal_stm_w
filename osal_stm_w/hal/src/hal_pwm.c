@@ -20,6 +20,7 @@
 static HALPwmTypeDef m_Instance[INDE_TIMER_MAX];
 static HALPwmTypeDef *m_pthis[INDE_TIMER_MAX] = {NULL};
 
+static UINT16 m_uMask[INDE_TIMER_MAX] = {0};
 static UINT16 m_uPeriod[INDE_TIMER_MAX] = {0};
 static TIM_OCInitTypeDef  m_TIM_OCInitStructure[INDE_TIMER_MAX];
 
@@ -56,7 +57,7 @@ static TIM_TypeDef* GetTimHandle(HalIndeTimerIDsTypeDef id)
 }
 
 /* 定时器 PWM 模式 初始化 */
-static void timer_pwm_init(HalIndeTimerIDsTypeDef id, UINT32 uus, UINT16 OCMode, UINT16 uPolarity)
+static void timer_pwm_init(HalIndeTimerIDsTypeDef id, UINT32 uus, UINT16 OCMode, UINT16 uPolarity, UINT16 uMask)
 {
     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_TypeDef* TIMx = GetTimHandle(id);
@@ -94,24 +95,36 @@ static void timer_pwm_init(HalIndeTimerIDsTypeDef id, UINT32 uus, UINT16 OCMode,
 
 	
 	/* 初始化定时器通道1输出PWM */
-	TIM_OC1Init(TIMx, &m_TIM_OCInitStructure[id]);
-	/* 定时器比较输出通道1预装载配置：使能预装载 */
-	TIM_OC1PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	if (m_uMask[id] & HAL_PWM_MASK_CH1)
+	{
+		TIM_OC1Init(TIMx, &m_TIM_OCInitStructure[id]);
+		/* 定时器比较输出通道1预装载配置：使能预装载 */
+		TIM_OC1PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	}
 	
 	/* 初始化定时器通道2输出PWM */
-	TIM_OC2Init(TIMx, &m_TIM_OCInitStructure[id]);
-	/* 定时器比较输出通道2预装载配置：使能预装载 */
-	TIM_OC2PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	if (m_uMask[id] & HAL_PWM_MASK_CH2)
+	{
+		TIM_OC2Init(TIMx, &m_TIM_OCInitStructure[id]);
+		/* 定时器比较输出通道2预装载配置：使能预装载 */
+		TIM_OC2PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	}
 	
 	/* 初始化定时器通道3输出PWM */
-	TIM_OC3Init(TIMx, &m_TIM_OCInitStructure[id]);
-	/* 定时器比较输出通道3预装载配置：使能预装载 */
-	TIM_OC3PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	if (m_uMask[id] & HAL_PWM_MASK_CH3)
+	{
+		TIM_OC3Init(TIMx, &m_TIM_OCInitStructure[id]);
+		/* 定时器比较输出通道3预装载配置：使能预装载 */
+		TIM_OC3PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	}
 	
 	/* 初始化定时器通道4输出PWM */
-	TIM_OC4Init(TIMx, &m_TIM_OCInitStructure[id]);
-	/* 定时器比较输出通道4预装载配置：使能预装载 */
-	TIM_OC4PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	if (m_uMask[id] & HAL_PWM_MASK_CH4)
+	{
+		TIM_OC4Init(TIMx, &m_TIM_OCInitStructure[id]);
+		/* 定时器比较输出通道4预装载配置：使能预装载 */
+		TIM_OC4PreloadConfig(TIMx, TIM_OCPreload_Enable);
+	}
 
 	/* 使能定时器重载寄存器ARR */
 	TIM_ARRPreloadConfig(TIMx, ENABLE);
@@ -151,27 +164,39 @@ static void timer_pwm_SetDutyCycle(HalIndeTimerIDsTypeDef id, UINT8 eCh, UINT8 d
 	{
 	case HAL_PWM_CH1: //定时器通道1
 		/* 初始化定时器通道1输出PWM */
-		TIM_OC1Init(TIMx, &TIM_OCInitStructure);
-		/* 定时器比较输出通道1预装载配置：使能预装载 */
-		TIM_OC1PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		if (m_uMask[id] & HAL_PWM_MASK_CH1)
+		{
+			TIM_OC1Init(TIMx, &TIM_OCInitStructure);
+			/* 定时器比较输出通道1预装载配置：使能预装载 */
+			TIM_OC1PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		}
 		break;
 	case HAL_PWM_CH2: //定时器通道2
 		/* 初始化定时器通道2输出PWM */
-		TIM_OC2Init(TIMx, &TIM_OCInitStructure);
-		/* 定时器比较输出通道2预装载配置：使能预装载 */
-		TIM_OC2PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		if (m_uMask[id] & HAL_PWM_MASK_CH2)
+		{
+			TIM_OC2Init(TIMx, &TIM_OCInitStructure);
+			/* 定时器比较输出通道2预装载配置：使能预装载 */
+			TIM_OC2PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		}
 		break;
 	case HAL_PWM_CH3: //定时器通道3
 		/* 初始化定时器通道3输出PWM */
-		TIM_OC3Init(TIMx, &TIM_OCInitStructure);
-		/* 定时器比较输出通道3预装载配置：使能预装载 */
-		TIM_OC3PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		if (m_uMask[id] & HAL_PWM_MASK_CH3)
+		{
+			TIM_OC3Init(TIMx, &TIM_OCInitStructure);
+			/* 定时器比较输出通道3预装载配置：使能预装载 */
+			TIM_OC3PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		}
 		break;
 	case HAL_PWM_CH4: //定时器通道4
 		/* 初始化定时器通道4输出PWM */
-		TIM_OC4Init(TIMx, &TIM_OCInitStructure);
-		/* 定时器比较输出通道4预装载配置：使能预装载 */
-		TIM_OC4PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		if (m_uMask[id] & HAL_PWM_MASK_CH4)
+		{
+			TIM_OC4Init(TIMx, &TIM_OCInitStructure);
+			/* 定时器比较输出通道4预装载配置：使能预装载 */
+			TIM_OC4PreloadConfig(TIMx, TIM_OCPreload_Enable);
+		}
 		break;
 	default:
 		break;
@@ -179,43 +204,55 @@ static void timer_pwm_SetDutyCycle(HalIndeTimerIDsTypeDef id, UINT8 eCh, UINT8 d
 }
 
 /* 定时器1 PWM 模式 初始化 */
-static void timer1_pwm_init(UINT32 uus, UINT16 uPolarity)
+static void timer1_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
+	m_uMask[INDE_TIMER_TIM1] = uMask;
   
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE); //时钟使能
 	
 	/* 配置定时器通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1_PIN;
+		GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道1输出引脚模式：复用推挽输出模式 */
+		GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1N_PIN;
+		GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2_PIN;
-	GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2_PIN;
+		GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道2输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2N_PIN;
+		GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3_PIN;
-	GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3_PIN;
+		GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道3输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3N_PIN;
+		GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH4_PIN;
-	GPIO_Init(TIM1_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH4_PIN;
+		GPIO_Init(TIM1_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
-	/* 配置定时器互补通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1N_PIN;
-	GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
 
-	/* 配置定时器互补通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2N_PIN;
-	GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
 
-	/* 配置定时器互补通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3N_PIN;
-	GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
-
-	timer_pwm_init(INDE_TIMER_TIM1, uus, TIM_OCMode_PWM1, uPolarity);
+	timer_pwm_init(INDE_TIMER_TIM1, uus, TIM_OCMode_PWM1, uPolarity, uMask);
 }
 
 /* 定时器1清零 */
@@ -224,34 +261,46 @@ static void timer1_pwm_deInit(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	/* 配置定时器通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1_PIN;
+		GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道1输出引脚模式：浮空输入模式 */
+		GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1N_PIN;
+		GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2_PIN;
-	GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2_PIN;
+		GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道2输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2N_PIN;
+		GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3_PIN;
-	GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3_PIN;
+		GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道3输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3N_PIN;
+		GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH4_PIN;
-	GPIO_Init(TIM1_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM1] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH4_PIN;
+		GPIO_Init(TIM1_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 	
-	/* 配置定时器互补通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM1_PWM_CH1N_PIN;
-	GPIO_Init(TIM1_PWM_CH1_PORT, &GPIO_InitStructure);
 
-	/* 配置定时器互补通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH2N_PIN;
-	GPIO_Init(TIM1_PWM_CH2_PORT, &GPIO_InitStructure);
 
-	/* 配置定时器互补通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM1_PWM_CH3N_PIN;
-	GPIO_Init(TIM1_PWM_CH3_PORT, &GPIO_InitStructure);
 
 	timer_pwm_deInit(INDE_TIMER_TIM1);
 }
@@ -266,31 +315,43 @@ static void timer1_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 }
 
 /* 定时器2 PWM 模式 初始化 */
-static void timer2_pwm_init(UINT32 uus, UINT16 uPolarity)
+static void timer2_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); //时钟使能
 	
 	/* 配置定时器通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM2_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM2_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM2_PWM_CH1_PIN;
+		GPIO_Init(TIM2_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH2_PIN;
-	GPIO_Init(TIM2_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH2_PIN;
+		GPIO_Init(TIM2_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH3_PIN;
-	GPIO_Init(TIM2_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH3_PIN;
+		GPIO_Init(TIM2_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH4_PIN;
-	GPIO_Init(TIM2_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH4_PIN;
+		GPIO_Init(TIM2_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
-	timer_pwm_init(INDE_TIMER_TIM2, uus, TIM_OCMode_PWM1, uPolarity);
+	timer_pwm_init(INDE_TIMER_TIM2, uus, TIM_OCMode_PWM1, uPolarity, uMask);
 }
 
 /* 定时器2清零 */
@@ -299,22 +360,34 @@ static void timer2_pwm_deInit(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	/* 配置定时器通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM2_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM2_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM2_PWM_CH1_PIN;
+		GPIO_Init(TIM2_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH2_PIN;
-	GPIO_Init(TIM2_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH2_PIN;
+		GPIO_Init(TIM2_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH3_PIN;
-	GPIO_Init(TIM2_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH3_PIN;
+		GPIO_Init(TIM2_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH4_PIN;
-	GPIO_Init(TIM2_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM2] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM2_PWM_CH4_PIN;
+		GPIO_Init(TIM2_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 	
 	timer_pwm_deInit(INDE_TIMER_TIM2);
 }
@@ -328,31 +401,43 @@ static void timer2_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 }
 
 /* 定时器3 PWM 模式 初始化 */
-static void timer3_pwm_init(UINT32 uus, UINT16 uPolarity)
+static void timer3_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE); //时钟使能
 	
 	/* 配置定时器通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM3_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM3_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM3_PWM_CH1_PIN;
+		GPIO_Init(TIM3_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH2_PIN;
-	GPIO_Init(TIM3_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH2_PIN;
+		GPIO_Init(TIM3_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH3_PIN;
-	GPIO_Init(TIM3_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH3_PIN;
+		GPIO_Init(TIM3_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH4_PIN;
-	GPIO_Init(TIM3_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH4_PIN;
+		GPIO_Init(TIM3_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
-	timer_pwm_init(INDE_TIMER_TIM3, uus, TIM_OCMode_PWM1, uPolarity);
+	timer_pwm_init(INDE_TIMER_TIM3, uus, TIM_OCMode_PWM1, uPolarity, uMask);
 }
 
 /* 定时器3清零 */
@@ -361,22 +446,34 @@ static void timer3_pwm_deInit(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	/* 配置定时器通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM3_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM3_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM3_PWM_CH1_PIN;
+		GPIO_Init(TIM3_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH2_PIN;
-	GPIO_Init(TIM3_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH2_PIN;
+		GPIO_Init(TIM3_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH3_PIN;
-	GPIO_Init(TIM3_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH3_PIN;
+		GPIO_Init(TIM3_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH4_PIN;
-	GPIO_Init(TIM3_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM3] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM3_PWM_CH4_PIN;
+		GPIO_Init(TIM3_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 	
 	timer_pwm_deInit(INDE_TIMER_TIM3);
 }
@@ -391,31 +488,43 @@ static void timer3_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 }
 
 /* 定时器4 PWM 模式 初始化 */
-static void timer4_pwm_init(UINT32 uus, UINT16 uPolarity)
+static void timer4_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE); //时钟使能
 	
 	/* 配置定时器通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM4_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM4_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM4_PWM_CH1_PIN;
+		GPIO_Init(TIM4_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH2_PIN;
-	GPIO_Init(TIM4_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH2_PIN;
+		GPIO_Init(TIM4_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH3_PIN;
-	GPIO_Init(TIM4_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH3_PIN;
+		GPIO_Init(TIM4_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH4_PIN;
-	GPIO_Init(TIM4_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH4_PIN;
+		GPIO_Init(TIM4_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
-	timer_pwm_init(INDE_TIMER_TIM4, uus, TIM_OCMode_PWM1, uPolarity);
+	timer_pwm_init(INDE_TIMER_TIM4, uus, TIM_OCMode_PWM1, uPolarity, uMask);
 }
 
 /* 定时器4清零 */
@@ -424,22 +533,34 @@ static void timer4_pwm_deInit(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	/* 配置定时器通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM4_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM4_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM4_PWM_CH1_PIN;
+		GPIO_Init(TIM4_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH2_PIN;
-	GPIO_Init(TIM4_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH2_PIN;
+		GPIO_Init(TIM4_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH3_PIN;
-	GPIO_Init(TIM4_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH3_PIN;
+		GPIO_Init(TIM4_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH4_PIN;
-	GPIO_Init(TIM4_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM4] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM4_PWM_CH4_PIN;
+		GPIO_Init(TIM4_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 	
 	timer_pwm_deInit(INDE_TIMER_TIM4);
 }
@@ -454,31 +575,43 @@ static void timer4_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 }
 
 /* 定时器5 PWM 模式 初始化 */
-static void timer5_pwm_init(UINT32 uus, UINT16 uPolarity)
+static void timer5_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE); //时钟使能
 	
 	/* 配置定时器通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM5_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM5_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM5_PWM_CH1_PIN;
+		GPIO_Init(TIM5_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH2_PIN;
-	GPIO_Init(TIM5_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH2_PIN;
+		GPIO_Init(TIM5_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH3_PIN;
-	GPIO_Init(TIM5_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH3_PIN;
+		GPIO_Init(TIM5_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH4_PIN;
-	GPIO_Init(TIM5_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH4_PIN;
+		GPIO_Init(TIM5_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
-	timer_pwm_init(INDE_TIMER_TIM5, uus, TIM_OCMode_PWM1, uPolarity);
+	timer_pwm_init(INDE_TIMER_TIM5, uus, TIM_OCMode_PWM1, uPolarity, uMask);
 }
 
 /* 定时器5清零 */
@@ -487,22 +620,34 @@ static void timer5_pwm_deInit(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	/* 配置定时器通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM5_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM5_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM5_PWM_CH1_PIN;
+		GPIO_Init(TIM5_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH2_PIN;
-	GPIO_Init(TIM5_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH2_PIN;
+		GPIO_Init(TIM5_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH3_PIN;
-	GPIO_Init(TIM5_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH3_PIN;
+		GPIO_Init(TIM5_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH4_PIN;
-	GPIO_Init(TIM5_PWM_CH4_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM5] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM5_PWM_CH4_PIN;
+		GPIO_Init(TIM5_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 	
 	timer_pwm_deInit(INDE_TIMER_TIM5);
 }
@@ -517,43 +662,54 @@ static void timer5_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 }
 
 /* 定时器8 PWM 模式 初始化 */
-static void timer8_pwm_init(UINT32 uus, UINT16 uPolarity)
+static void timer8_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE); //时钟使能
 	
 	/* 配置定时器通道1输出引脚模式：复用推挽输出模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1_PIN;
+		GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道1输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1N_PIN;
+		GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2_PIN;
-	GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2_PIN;
+		GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道2输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2N_PIN;
+		GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3_PIN;
-	GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3_PIN;
+		GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道3输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3N_PIN;
+		GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH4_PIN;
-	GPIO_Init(TIM8_PWM_CH4_PORT, &GPIO_InitStructure);
-	
-	/* 配置定时器互补通道1输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1N_PIN;
-	GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH4_PIN;
+		GPIO_Init(TIM8_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
-	/* 配置定时器互补通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2N_PIN;
-	GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
 
-	/* 配置定时器互补通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3N_PIN;
-	GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
 
-	timer_pwm_init(INDE_TIMER_TIM8, uus, TIM_OCMode_PWM1, uPolarity);
+	timer_pwm_init(INDE_TIMER_TIM8, uus, TIM_OCMode_PWM1, uPolarity, uMask);
 }
 
 /* 定时器8清零 */
@@ -562,34 +718,43 @@ static void timer8_pwm_deInit(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
   
 	/* 配置定时器通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH1)
+	{
+		GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1_PIN;
+		GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道1输出引脚模式：浮空输入模式 */
+		GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1N_PIN;
+		GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2_PIN;
-	GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH2)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2_PIN;
+		GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道2输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2N_PIN;
+		GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3_PIN;
-	GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH3)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3_PIN;
+		GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+		/* 配置定时器互补通道3输出引脚模式 */
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3N_PIN;
+		GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+	}
 
 	/* 配置定时器通道4输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH4_PIN;
-	GPIO_Init(TIM8_PWM_CH4_PORT, &GPIO_InitStructure);
-	
-	/* 配置定时器互补通道1输出引脚模式：浮空输入模式 */
-	GPIO_InitStructure.GPIO_Pin =  TIM8_PWM_CH1N_PIN;
-	GPIO_Init(TIM8_PWM_CH1_PORT, &GPIO_InitStructure);
-
-	/* 配置定时器互补通道2输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH2N_PIN;
-	GPIO_Init(TIM8_PWM_CH2_PORT, &GPIO_InitStructure);
-
-	/* 配置定时器互补通道3输出引脚模式 */
-	GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH3N_PIN;
-	GPIO_Init(TIM8_PWM_CH3_PORT, &GPIO_InitStructure);
+	if (m_uMask[INDE_TIMER_TIM8] & HAL_PWM_MASK_CH4)
+	{
+		GPIO_InitStructure.GPIO_Pin = TIM8_PWM_CH4_PIN;
+		GPIO_Init(TIM8_PWM_CH4_PORT, &GPIO_InitStructure);
+	}
 
 	timer_pwm_deInit(INDE_TIMER_TIM8);
 }

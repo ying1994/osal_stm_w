@@ -119,6 +119,17 @@ typedef enum
 }HALPWMChannelTypeDef;
 
 /** 
+ * @brief PWM 通道使能标记
+ */
+typedef enum
+{
+	HAL_PWM_MASK_CH1 =				0x0001, /*<! PWM通道1使能 */
+	HAL_PWM_MASK_CH2 =				0x0002, /*<! PWM通道1使能 */
+	HAL_PWM_MASK_CH3 =				0x0004, /*<! PWM通道1使能 */
+	HAL_PWM_MASK_CH4 =				0x0008, /*<! PWM通道1使能 */
+}HALPWMMaskTypeDef;
+
+/** 
  * @brief PWM操作结构定义
  */
 typedef struct
@@ -127,9 +138,10 @@ typedef struct
 	 * @brief PWM初始化
 	 * @param uus PWM周期 (单位: us)
 	 * @param uPolarity PWM极性 @ref HALPWMPolarityTypeDef
+	 * @param uMask PWM初始化通道标志 @ref HALPWMMaskTypeDef
 	 * @retval None
 	 */
-	void (*init)(UINT32 uus, UINT16 uPolarity);
+	void (*init)(UINT32 uus, UINT16 uPolarity, UINT16 uMask);
 	
 	/**
 	 * @brief PWM资源注销
