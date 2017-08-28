@@ -10,607 +10,185 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights Reserved
+ * All rights res
  *
  */
-#include  "hal_adc.h"
-#include  "hal_defs.h"
-#include  "hal_types.h"
 
-#ifdef CFG_HAL_ADC
+#include "hal_adc.h"
+#include "hal_cpu.h"
+#include "hal_gpio.h"
 
-
-static HALAdcTypeDef m_hAdcInstance[HAL_ADC_SIZE];
-static HALAdcTypeDef* pthis[HAL_ADC_SIZE] = {NULL};
+#if defined(CFG_HAL_ADC) && defined(CFG_HAL_GPIO)
 
 /**
- * @brief: ADC资源初始化
- * @param: ADCx ADC通道
- * @retval: void
+ * @brief ADC通道关联GPIO资源, 指定的GPIO将自动配置为模拟输入
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param channel ADC通道号 @ref HAL_ADC_channels
+ * @param gpiox GPIO类型
+ * @param pin GPIO端口引脚号
+ * @retval void
  */
-static void HalAdcInit (ADC_TypeDef* ADCx)
+void HalAdcGpioRegist(HALAdcNumer numer, UINT8 channel, HANDLE gpiox, UINT32 pin)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
+	/* 配置为模拟输入 */
+	HalGpioInit(gpiox, pin, HAL_GPIOMode_AIN);
+}
+
+/**
+ * @brief ADC资源初始化
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param mode 工作模式 @ref HAL_ADC_mode
+ * @param trigger 触发方式 @ref HAL_ADC_external_trigger_sources_for_regular_channels_conversion
+ * @param dataAlign 对齐方式 @ref HAL_ADC_data_align
+ * @param DMAState DMA使能状态
+ * @retval void
+ * @attention 初始化之前勿必先通道 HalAdcGpioRegist() 函数关联GPIO资源 
+ */
+void HalAdcInit (HALAdcNumer numer, UINT32 mode, UINT32 trigger, UINT32 dataAlign, FunctionalState DMAState)
+{
+	ADC_TypeDef* ADCx = NULL;
 	ADC_InitTypeDef ADC_InitStructure;
-	__IO uint16_t ADCConvertedValue;
-
-	if (ADC1 == ADCx)
+    /* 使能 ADC1 and GPIOC clock */
+	if (HAL_ADC1 == numer)
 	{
-		/* 使能 ADC1 and GPIOC clock */
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOC, ENABLE);
-		/* 配置PC4为模拟输入(ADC Channel14) */
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-		GPIO_Init(GPIOC, &GPIO_InitStructure);
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+		ADCx = ADC1;
 	}
-	else if (ADC2 == ADCx)
+	else if (HAL_ADC2 == numer)
 	{
-		/* 使能 ADC1 and GPIOC clock */
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC2 | RCC_APB2Periph_GPIOC, ENABLE);
-		/* 配置PC4为模拟输入(ADC Channel14) */
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-		GPIO_Init(GPIOC, &GPIO_InitStructure);
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC2, ENABLE);
+		ADCx = ADC2;
 	}
-	else //if (ADC3 == ADCx)
+	else if (HAL_ADC3 == numer)
 	{
-		/* 使能 ADC1 and GPIOC clock */
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC3 | RCC_APB2Periph_GPIOC, ENABLE);
-		/* 配置PC4为模拟输入(ADC Channel14) */
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-		GPIO_Init(GPIOC, &GPIO_InitStructure);
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC3, ENABLE);
+		ADCx = ADC3;
 	}
-
-	/* 配置ADC1, 不用DMA */
-	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
+	else
+	{
+		return;
+	}
+	
+	/* 配置ADC1, 不用DMA, 用软件自己触发 */
+	ADC_InitStructure.ADC_Mode = mode;
 	ADC_InitStructure.ADC_ScanConvMode = ENABLE;
 	ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
-	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
-	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	ADC_InitStructure.ADC_ExternalTrigConv = trigger;
+	ADC_InitStructure.ADC_DataAlign = dataAlign;
 	ADC_InitStructure.ADC_NbrOfChannel = 1;
 	ADC_Init(ADCx, &ADC_InitStructure);
 
-	/* ADCx regular channel14 configuration */
-	ADC_RegularChannelConfig(ADCx, ADC_Channel_14, 1, ADC_SampleTime_55Cycles5);
+	/* ADC1 regular channel14 configuration */
+	//ADC_RegularChannelConfig(ADCx, ADC_Channel_14, 1, ADC_SampleTime_55Cycles5);
 
-	/* Enable ADCx DMA */
-	ADC_DMACmd(ADCx, ENABLE);
+	/* Enable ADC DMA */
+	ADC_DMACmd(ADCx, DMAState);
 
-	/* Enable ADCx */
-	ADC_Cmd(ADCx, ENABLE);
+	/* Enable ADC */
+	ADC_Cmd(ADCx, DISABLE);
 
-	/* Enable ADCx reset calibaration register */
+	/* Enable ADC reset calibaration register */
 	ADC_ResetCalibration(ADCx);
-	/* Check the end of ADCx reset calibration register */
+	/* Check the end of ADC reset calibration register */
 	while(ADC_GetResetCalibrationStatus(ADCx));
 
-	/* Start ADCx calibaration */
+	/* Start ADC calibaration */
 	ADC_StartCalibration(ADCx);
-	/* Check the end of ADCx calibration */
+	/* Check the end of ADC calibration */
 	while(ADC_GetCalibrationStatus(ADCx));
 
-	/* Start ADCx Software Conversion */
+	/* Start ADC Software Conversion */
 	ADC_SoftwareStartConvCmd(ADCx, ENABLE);
 }
 
 /**
- * @brief: 注销ADC资源
- * @param: ADCx ADC通道
- * @retval: void
+ * @brief ADC资源初始化
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param NewState ADC使能状态
+ * @retval void
  */
-static void HalAdcDeInit (ADC_TypeDef* ADCx)
+void HalAdcCmd(HALAdcNumer numer, FunctionalState NewState)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
+	/* Enable ADC */
+	if (HAL_ADC1 == numer)
+		ADC_Cmd(ADC1, NewState);
+	else if (HAL_ADC2 == numer)
+		ADC_Cmd(ADC2, NewState);
+	else if (HAL_ADC3 == numer)
+		ADC_Cmd(ADC3, NewState);
+}
+
+/**
+ * @brief 从指定ADC通道及分辨率读取值
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param channel ADC通道号 @ref HAL_ADC_channels
+ * @retval ADC转换结果
+ */
+UINT16 HalAdcRead (HALAdcNumer numer, UINT8 channel)
+{
+	UINT16 uVal;
+	ADC_TypeDef* ADCx = NULL;
+	if (HAL_ADC1 == numer)
+		ADCx = ADC1;
+	else if (HAL_ADC2 == numer)
+		ADCx = ADC2;
+	else if (HAL_ADC3 == numer)
+		ADCx = ADC3;
+	else
+		return 0;
+	/* ADC1 regular channe configuration */
+	ADC_RegularChannelConfig(ADCx, channel, 1, HAL_ADC_SampleTime_55Cycles5);
+
+	ADC_SoftwareStartConvCmd(ADCx, ENABLE);	/* 软件启动下次ADC转换 */
+	while (!ADC_GetFlagStatus(ADCx, ADC_FLAG_EOC));
+	uVal = ADC_GetConversionValue(ADCx);
 	
-	if (ADC1 == ADCx)
+	return uVal;
+}
+
+/**
+ * @brief 从指定ADC通道及分辨率读取值
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param channel ADC通道号 @ref HAL_ADC_channels
+ * @param count 转换次数（结果取平均值）
+ * @retval ADC转换结果
+ */
+UINT16 HalAdcReadAvg (HALAdcNumer numer, UINT8 channel, UINT16 count )
+{
+	UINT32 uSum = 0;
+	UINT16 uVal = 0;
+	UINT16 uMax = 0;
+	UINT16 uMin = 0xffff;
+	UINT16 i = 0;
+	ADC_TypeDef* ADCx = NULL;
+	if (HAL_ADC1 == numer)
+		ADCx = ADC1;
+	else if (HAL_ADC2 == numer)
+		ADCx = ADC2;
+	else if (HAL_ADC3 == numer)
+		ADCx = ADC3;
+	else
+		return 0;
+	/* ADC1 regular channe configuration */
+	ADC_RegularChannelConfig(ADCx, channel, 1, ADC_SampleTime_55Cycles5);
+
+	for (i=0; i<count; i++)
 	{
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-		GPIO_Init(GPIOC, &GPIO_InitStructure);
-	}
-	else if (ADC2 == ADCx)
-	{
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-		GPIO_Init(GPIOC, &GPIO_InitStructure);
-	}
-	else //if (ADC3 == ADCx)
-	{
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-		GPIO_Init(GPIOC, &GPIO_InitStructure);
-	}
-	
-	ADC_DeInit(ADCx);
-}
-
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc0Init (void)
-{
-	HalAdcInit(ADC1);
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc0DeInit (void)
-{
-	HalAdcDeInit(ADC1);
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc0Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc0SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc0CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc1Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc1DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc1Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc1SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc1CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc2Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc2DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc2Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc2SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc2CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc3Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc3DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc3Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc3SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc3CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc4Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc4DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc4Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc4SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc4CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc5Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc5DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc5Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc5SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc5CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc6Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc6DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc6Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc6SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc6CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: ADC资源初始化
- * @param: void
- * @retval: void
- */
-static void HalAdc7Init (void)
-{
-
-}
-
-/**
- * @brief: 注销ADC资源
- * @param: void
- * @retval: void
- */
-static void HalAdc7DeInit (void)
-{
-
-}
-
-/**
- * @brief: 从指定ADC通道及分辨率读取值
- * @param: resolution 指定ADC分辨率（8位、12位、16位）
- * @retval: ADC转换结果
- */
-static uint16 HalAdc7Read (uint8 resolution)
-{
-  int16  reading = 0;
-
-  return ((uint16)reading);
-}
-
-/**
- * @brief: 设置ADC参考电压
- * @param: reference ADC参考电压
- * @retval: void
- */
-static void HalAdc7SetReference ( uint8 reference )
-{
-
-}
-
-/**
- * @brief: Check for minimum Vdd specified.
- * @param: vdd - The board-specific Vdd reading to check for.
- * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
- *          FALSE if not.
- */
-static bool HalAdc7CheckVdd(uint8 vdd)
-{
-	return 0;
-}
-
-/**
- * @brief: 创建端口串口通讯对象
- * @param numer: 串口端口号
- * @retval None
- */
-static void New(HALAdcNumer numer)
-{
-	switch (numer)
-	{
-	case HAL_ADC0:
-		m_hAdcInstance[HAL_ADC0].init = HalAdc0Init;
-		m_hAdcInstance[HAL_ADC0].deInit = HalAdc0DeInit;
-		m_hAdcInstance[HAL_ADC0].read = HalAdc0Read;
-		m_hAdcInstance[HAL_ADC0].setReference = HalAdc0SetReference;
-		m_hAdcInstance[HAL_ADC0].checkVdd = HalAdc0CheckVdd;
-		pthis[HAL_ADC0] = &m_hAdcInstance[HAL_ADC0];
-		pthis[HAL_ADC0]->init();
-		break;
-	case HAL_ADC1:
-		m_hAdcInstance[HAL_ADC1].init = HalAdc1Init;
-		m_hAdcInstance[HAL_ADC1].deInit = HalAdc1DeInit;
-		m_hAdcInstance[HAL_ADC1].read = HalAdc1Read;
-		m_hAdcInstance[HAL_ADC1].setReference = HalAdc1SetReference;
-		m_hAdcInstance[HAL_ADC1].checkVdd = HalAdc1CheckVdd;
-		pthis[HAL_ADC1] = &m_hAdcInstance[HAL_ADC1];
-		pthis[HAL_ADC1]->init();
-		break;
-	case HAL_ADC2:
-		m_hAdcInstance[HAL_ADC2].init = HalAdc2Init;
-		m_hAdcInstance[HAL_ADC2].deInit = HalAdc2DeInit;
-		m_hAdcInstance[HAL_ADC2].read = HalAdc2Read;
-		m_hAdcInstance[HAL_ADC2].setReference = HalAdc2SetReference;
-		m_hAdcInstance[HAL_ADC2].checkVdd = HalAdc2CheckVdd;
-		pthis[HAL_ADC2] = &m_hAdcInstance[HAL_ADC2];
-		pthis[HAL_ADC2]->init();
-		break;
-	case HAL_ADC3:
-		m_hAdcInstance[HAL_ADC3].init = HalAdc3Init;
-		m_hAdcInstance[HAL_ADC3].deInit = HalAdc3DeInit;
-		m_hAdcInstance[HAL_ADC3].read = HalAdc3Read;
-		m_hAdcInstance[HAL_ADC3].setReference = HalAdc3SetReference;
-		m_hAdcInstance[HAL_ADC3].checkVdd = HalAdc3CheckVdd;
-		pthis[HAL_ADC3] = &m_hAdcInstance[HAL_ADC3];
-		pthis[HAL_ADC3]->init();
-		break;
-	default:
-		break;
-	}
-}
-/**
- * @brief: 获取指定端口通讯句柄
- * @param numer: 端口号
- * @retval: 指定端口通讯句柄
- */
-HALAdcTypeDef* hal_adc_getinstance(HALAdcNumer numer)
-{
-	if (NULL == pthis[numer])
-	{
-		New(numer);
+		ADC_SoftwareStartConvCmd(ADCx, ENABLE);	/* 软件启动下次ADC转换 */
+		HalIwdgFred();
+		while (!ADC_GetFlagStatus(ADCx, ADC_FLAG_EOC));
+		uVal = ADC_GetConversionValue(ADCx);
+		uSum += uVal;
+		uMax = (uMax < uVal) ? uVal : uMax;
+		uMin = (uMin > uVal) ? uVal : uMin;
 	}
 	
-	return pthis[numer];
+	if (count >= 10)
+	{
+		uSum -= (uMax - uMin);
+		count >>= 1;
+	}
+	
+	return (UINT16)(uSum / count);
 }
 #endif //CFG_HAL_ADC

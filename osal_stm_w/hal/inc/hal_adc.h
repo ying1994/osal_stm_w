@@ -10,7 +10,7 @@
  ******************************************************************************
  * COPYRIGHT NOTICE  
  * Copyright 2016, wsf 
- * All rights Reserved
+ * All rights res
  *
  */
 #ifndef _HAL_ADC_H
@@ -18,117 +18,179 @@
 
 #include "hal_cfg.h"
 #include "hal_types.h"
-#include "hal_board.h"
 
-
-#ifdef CFG_HAL_ADC
-
-/* Resolution */
-#define HAL_ADC_RESOLUTION_8       0x01
-#define HAL_ADC_RESOLUTION_10      0x02
-#define HAL_ADC_RESOLUTION_12      0x03
-#define HAL_ADC_RESOLUTION_14      0x04
-
+#if defined(CFG_HAL_ADC) && defined(CFG_HAL_GPIO)
 
 /**
- * @brief ADC端口号
+ * @brief 串口端口号
  */
 typedef enum 
 {
-	HAL_ADC0 = 0x00,	/*!< ADC0 */
-	HAL_ADC1,           /*!< ADC1 */
-	HAL_ADC2,           /*!< ADC2 */
-	HAL_ADC3,           /*!< ADC3 */
-	HAL_ADC_SIZE		/*!< ADC 端口总数 */
+	HAL_ADC1 = 0,	/*!< ADC1 */
+	HAL_ADC2,		/*!< ADC2 */
+	HAL_ADC3,		/*!< ADC3 */
+	HAL_ADC_SIZE	/*!< ADC 端口总数 */
 }HALAdcNumer;
 
-/**
- * @brief ADC通道号号
- */
-typedef enum 
-{
-	HAL_ADC_CHN_AIN0 = ADC_Channel_0,
-	HAL_ADC_CHN_AIN1 = ADC_Channel_1,
-	HAL_ADC_CHN_AIN2 = ADC_Channel_2,
-	HAL_ADC_CHN_AIN3 = ADC_Channel_3,
-	HAL_ADC_CHN_AIN4 = ADC_Channel_4,
-	HAL_ADC_CHN_AIN5 = ADC_Channel_5,
-	HAL_ADC_CHN_AIN6 = ADC_Channel_6,
-	HAL_ADC_CHN_AIN7 = ADC_Channel_7,
-	HAL_ADC_CHN_AIN8 = ADC_Channel_8,
-	HAL_ADC_CHN_AIN9 = ADC_Channel_9,
-	HAL_ADC_CHN_AIN10 = ADC_Channel_10,
-	HAL_ADC_CHN_AIN11 = ADC_Channel_11,
-	HAL_ADC_CHN_AIN12 = ADC_Channel_12,
-	HAL_ADC_CHN_AIN13 = ADC_Channel_13,
-	HAL_ADC_CHN_AIN14 = ADC_Channel_14,
-	HAL_ADC_CHN_AIN15 = ADC_Channel_15,
-	HAL_ADC_CHN_AIN16 = ADC_Channel_16,
-	HAL_ADC_CHN_AIN17 = ADC_Channel_17,
-	HAL_ADC_CHN_AIN_TempSensor = ADC_Channel_TempSensor,
-	HAL_ADC_CHN_AIN_Vrefint = ADC_Channel_Vrefint
-}HALAdcChannel;
+/** @defgroup HAL_ADC_channels 
+  * @{
+  */
 
-#define IS_HAL_ADC_CHANNEL(CHANNEL) (((CHANNEL) == HAL_ADC_CHN_AIN0) || ((CHANNEL) == HAL_ADC_CHN_AIN1) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN2) || ((CHANNEL) == HAL_ADC_CHN_AIN3) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN4) || ((CHANNEL) == HAL_ADC_CHN_AIN5) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN6) || ((CHANNEL) == HAL_ADC_CHN_AIN7) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN8) || ((CHANNEL) == HAL_ADC_CHN_AIN9) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN10) || ((CHANNEL) == HAL_ADC_CHN_AIN11) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN12) || ((CHANNEL) == HAL_ADC_CHN_AIN13) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN14) || ((CHANNEL) == HAL_ADC_CHN_AIN15) || \
-									 ((CHANNEL) == HAL_ADC_CHN_AIN16) || ((CHANNEL) == HAL_ADC_CHN_AIN17))
-
-
+#define HAL_ADC_CHANNEL_0  ADC_Channel_0 
+#define HAL_ADC_CHANNEL_1  ADC_Channel_1 
+#define HAL_ADC_CHANNEL_2  ADC_Channel_2 
+#define HAL_ADC_CHANNEL_3  ADC_Channel_3 
+#define HAL_ADC_CHANNEL_4  ADC_Channel_4 
+#define HAL_ADC_CHANNEL_5  ADC_Channel_5 
+#define HAL_ADC_CHANNEL_6  ADC_Channel_6 
+#define HAL_ADC_CHANNEL_7  ADC_Channel_7 
+#define HAL_ADC_CHANNEL_8  ADC_Channel_8 
+#define HAL_ADC_CHANNEL_9  ADC_Channel_9 
+#define HAL_ADC_CHANNEL_10 ADC_Channel_10
+#define HAL_ADC_CHANNEL_11 ADC_Channel_11
+#define HAL_ADC_CHANNEL_12 ADC_Channel_12
+#define HAL_ADC_CHANNEL_13 ADC_Channel_13
+#define HAL_ADC_CHANNEL_14 ADC_Channel_14
+#define HAL_ADC_CHANNEL_15 ADC_Channel_15
+#define HAL_ADC_CHANNEL_16 ADC_Channel_16
+#define HAL_ADC_CHANNEL_17 ADC_Channel_17
 
 /**
- * @brief 串口操作结构定义
- */
-typedef struct _HALAdcTypeDef
-{
-	/**
-	 * @brief: ADC资源初始化
-	 * @param: void
-	 * @retval: void
-	 */
-	void (*init)(void);
+  * @}
+  */
+/** @defgroup HAL_ADC_mode 
+  * @{
+  */
 
-	/**
-	 * @brief: 注销ADC资源
-	 * @param: void
-	 * @retval: void
-	 */
-	void (*deInit)(void);
-	
-	/**
-	 * @brief: 从指定ADC通道及分辨率读取值
-	 * @param: resolution 指定ADC分辨率（8位、12位、16位）
-	 * @retval: ADC转换结果
-	 */
-	uint16 (*read)(uint8 resolution);
-
-	/**
-	 * @brief: 设置ADC参考电压
-	 * @param: reference ADC参考电压
-	 * @retval: void
-	 */
-	void (*setReference)(uint8 reference);
-
-	/**
-	 * @brief: Check for minimum Vdd specified.
-	 * @param: vdd - The board-specific Vdd reading to check for.
-	 * @retval: TRUE if the Vdd measured is greater than the 'vdd' minimum parameter;
-	 *          FALSE if not.
-	 */
-	bool (*checkVdd)(uint8 vdd);
-}HALAdcTypeDef;
+#define HAL_ADC_Mode_Independent             ADC_Mode_Independent
+#define HAL_ADC_Mode_RegInjecSimult          ADC_Mode_RegInjecSimult
+#define HAL_ADC_Mode_RegSimult_AlterTrig     ADC_Mode_RegSimult_AlterTrig
+#define HAL_ADC_Mode_InjecSimult_FastInterl  ADC_Mode_InjecSimult_FastInterl
+#define HAL_ADC_Mode_InjecSimult_SlowInterl  ADC_Mode_InjecSimult_SlowInterl
+#define HAL_ADC_Mode_InjecSimult             ADC_Mode_InjecSimult
+#define HAL_ADC_Mode_RegSimult               ADC_Mode_RegSimult
+#define HAL_ADC_Mode_FastInterl              ADC_Mode_FastInterl
+#define HAL_ADC_Mode_SlowInterl              ADC_Mode_SlowInterl
+#define HAL_ADC_Mode_AlterTrig               ADC_Mode_AlterTrig
+/**
+  * @}
+  */
+  
+/** @defgroup HAL_ADC_sampling_time 
+  * @{
+  */
+  
+#define HAL_ADC_SampleTime_1Cycles5   ADC_SampleTime_1Cycles5  
+#define HAL_ADC_SampleTime_7Cycles5   ADC_SampleTime_7Cycles5   
+#define HAL_ADC_SampleTime_13Cycles5  ADC_SampleTime_13Cycles5  
+#define HAL_ADC_SampleTime_28Cycles5  ADC_SampleTime_28Cycles5  
+#define HAL_ADC_SampleTime_41Cycles5  ADC_SampleTime_41Cycles5  
+#define HAL_ADC_SampleTime_55Cycles5  ADC_SampleTime_55Cycles5  
+#define HAL_ADC_SampleTime_71Cycles5  ADC_SampleTime_71Cycles5  
+#define HAL_ADC_SampleTime_239Cycles5 ADC_SampleTime_239Cycles5 
 
 /**
- * @brief: 获取指定端口通讯句柄
- * @param numer: 端口号
- * @retval: 指定端口通讯句柄
+  * @}
+  */
+/** @defgroup HAL_ADC_external_trigger_sources_for_regular_channels_conversion 
+  * @{
+  */
+
+#define HAL_ADC_ExtTrigConv_T1_CC1                ADC_ExternalTrigConv_T1_CC1              /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigConv_T1_CC2                ADC_ExternalTrigConv_T1_CC2              /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigConv_T2_CC2                ADC_ExternalTrigConv_T2_CC2              /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigConv_T3_TRGO               ADC_ExternalTrigConv_T3_TRGO             /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigConv_T4_CC4                ADC_ExternalTrigConv_T4_CC4              /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigConv_Ext_IT11_TIM8_TRGO    ADC_ExternalTrigConv_Ext_IT11_TIM8_TRGO  /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigConv_T1_CC3                ADC_ExternalTrigConv_T1_CC3              /*!< For ADC1, ADC2 and ADC3 */
+#define HAL_ADC_ExtTrigConv_None                  ADC_ExternalTrigConv_None                /*!< For ADC1, ADC2 and ADC3 */
+#define HAL_ADC_ExtTrigConv_T3_CC1                ADC_ExternalTrigConv_T3_CC1              /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigConv_T2_CC3                ADC_ExternalTrigConv_T2_CC3              /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigConv_T8_CC1                ADC_ExternalTrigConv_T8_CC1              /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigConv_T8_TRGO               ADC_ExternalTrigConv_T8_TRGO             /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigConv_T5_CC1                ADC_ExternalTrigConv_T5_CC1              /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigConv_T5_CC3                ADC_ExternalTrigConv_T5_CC3              /*!< For ADC3 only */
+/**
+  * @}
+  */
+
+/** @defgroup HAL_ADC_external_trigger_sources_for_injected_channels_conversion 
+  * @{
+  */
+
+#define HAL_ADC_ExtTrigInjecConv_T2_TRGO           ADC_ExternalTrigInjecConv_T2_TRGO           /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigInjecConv_T2_CC1            ADC_ExternalTrigInjecConv_T2_CC1            /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigInjecConv_T3_CC4            ADC_ExternalTrigInjecConv_T3_CC4            /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigInjecConv_T4_TRGO           ADC_ExternalTrigInjecConv_T4_TRGO           /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigInjecConv_Ext_IT15_TIM8_CC4 ADC_ExternalTrigInjecConv_Ext_IT15_TIM8_CC4 /*!< For ADC1 and ADC2 */
+#define HAL_ADC_ExtTrigInjecConv_T1_TRGO           ADC_ExternalTrigInjecConv_T1_TRGO           /*!< For ADC1, ADC2 and ADC3 */
+#define HAL_ADC_ExtTrigInjecConv_T1_CC4            ADC_ExternalTrigInjecConv_T1_CC4            /*!< For ADC1, ADC2 and ADC3 */
+#define HAL_ADC_ExtTrigInjecConv_None              ADC_ExternalTrigInjecConv_None              /*!< For ADC1, ADC2 and ADC3 */
+#define HAL_ADC_ExtTrigInjecConv_T4_CC3            ADC_ExternalTrigInjecConv_T4_CC3            /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigInjecConv_T8_CC2            ADC_ExternalTrigInjecConv_T8_CC2            /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigInjecConv_T8_CC4            ADC_ExternalTrigInjecConv_T8_CC4            /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigInjecConv_T5_TRGO           ADC_ExternalTrigInjecConv_T5_TRGO           /*!< For ADC3 only */
+#define HAL_ADC_ExtTrigInjecConv_T5_CC4            ADC_ExternalTrigInjecConv_T5_CC4            /*!< For ADC3 only */
+/**
+  * @}
+  */
+
+/** @defgroup HAL_ADC_data_align 
+  * @{
+  */
+
+#define HAL_ADC_DataAlign_Right ADC_DataAlign_Right
+#define HAL_ADC_DataAlign_Left  ADC_DataAlign_Left 
+/**
+  * @}
+  */
+
+/**
+ * @brief ADC通道关联GPIO资源
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param channel ADC通道号 @ref HAL_ADC_channels
+ * @param gpiox GPIO类型
+ * @param pin GPIO端口引脚号
+ * @retval void
  */
-HALAdcTypeDef* hal_adc_getinstance(HALAdcNumer numer);
+void HalAdcGpioRegist(HALAdcNumer numer, UINT8 channel, HANDLE gpiox, UINT32 pin);
+
+/**
+ * @brief ADC资源初始化
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param mode 工作模式 @ref HAL_ADC_mode
+ * @param trigger 触发方式 @ref HAL_ADC_external_trigger_sources_for_regular_channels_conversion
+ * @param dataAlign 对齐方式 @ref HAL_ADC_data_align
+ * @param DMAState DMA使能状态
+ * @retval void
+ * @attention 初始化之前勿必先通道 HalAdcGpioRegist() 函数关联GPIO资源 
+ */
+void HalAdcInit (HALAdcNumer numer, UINT32 mode, UINT32 trigger, UINT32 dataAlign, FunctionalState DMAState);
+
+/**
+ * @brief ADC资源初始化
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param NewState ADC使能状态
+ * @retval void
+ */
+void HalAdcCmd(HALAdcNumer numer, FunctionalState NewState);
+
+/**
+ * @brief 从指定ADC通道及分辨率读取值
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param channel ADC通道号 @ref HAL_ADC_channels
+ * @retval ADC转换结果
+ */
+UINT16 HalAdcRead (HALAdcNumer numer, UINT8 channel);
+
+/**
+ * @brief 从指定ADC通道及分辨率读取值
+ * @param numer ADC端口号 @ref HALAdcNumer
+ * @param channel ADC通道号 @ref HAL_ADC_channels
+ * @param count 转换次数（结果取平均值）
+ * @retval ADC转换结果
+ */
+UINT16 HalAdcReadAvg (HALAdcNumer numer, UINT8 channel, UINT16 count );
 
 #endif //CFG_HAL_ADC
 #endif

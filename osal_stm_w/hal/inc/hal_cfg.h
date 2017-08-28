@@ -23,7 +23,7 @@
 
 
 #define CFG_HAL_CPU
-//#define CFG_HAL_ADC
+#define CFG_HAL_ADC
 #define CFG_HAL_CRC
 #define CFG_HAL_EXTI
 #define CFG_HAL_FLASH
@@ -34,6 +34,7 @@
 #define CFG_HAL_UART
 #define CFG_HAL_RTC
 #define CFG_HAL_CAN
+#define CFG_HAL_PWM
 
 #define CFG_HAL_IAP
 
