@@ -66,8 +66,8 @@ static void timer2_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM2);
 		//定时器TIM2初始化
-		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =35; //4-1 设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -115,8 +115,8 @@ static void timer3_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM3);
 		//定时器TIM3初始化
-		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -164,8 +164,8 @@ static void timer4_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM4);
 		//定时器TIM4初始化
-		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -214,8 +214,8 @@ static void timer5_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM5);
 		//定时器TIM5初始化
-		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -263,8 +263,8 @@ static void timer6_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM6);
 		//定时器TIM6初始化
-		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM6, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
