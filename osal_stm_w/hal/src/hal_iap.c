@@ -162,22 +162,19 @@ void HalIapJmp2addr(UINT32 uAddr)
 	if (HAL_APP_BASE_ADDR == uAddr)
 	{
         //判断用户是否已经下载程序，因为正常情况下此地址是栈地址。
-        if (((*(volatile UINT32*)HAL_APP_BASE_ADDR) & 0x2FFE0000 ) == 0x20000000)
+        if ((((*(volatile UINT32*)HAL_APP_BASE_ADDR) & 0x2FFE0000 ) == 0x20000000) && HalIapIsAppActive())//APP程序可执行
 		{
-			if (HalIapIsAppActive())//APP程序可执行
-			{
-				TRACE("Jump to Application");
-				TRACE("\r\n");
-				usleep(5000);
-				CloseIRQHard();
-				jump2addr = (HAL_BASE_FUNC)(*(volatile UINT32*)(uAddr + 4));
-				__set_MSP(*(volatile UINT32*) uAddr);
-				jump2addr();			
-			}
+			TRACE("Jump to Application");
+			TRACE("\r\n");
+			usleep(5000);
+			CloseIRQHard();
+			jump2addr = (HAL_BASE_FUNC)(*(volatile UINT32*)(uAddr + 4));
+			__set_MSP(*(volatile UINT32*) uAddr);
+			jump2addr();
 		}
 		else
 		{
-				TRACE("Application is not active!\r\n");
+			TRACE("Application is not active!\r\n");
 		}
 	}
 	else

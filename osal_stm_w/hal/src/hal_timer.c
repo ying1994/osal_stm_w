@@ -474,6 +474,7 @@ INT32 HalSetIndeTimer(UINT32 tID, HalTimerCBack_t hTimerFunc, UINT32 uus)
 	{
 		if (m_hIndeTimer[tID] != hTimerFunc)//¶¨Ê±Æ÷ÒÑ×¢²á
 		{
+			m_hIndeTimer[tID] = hTimerFunc;
 			m_hTimerInitFunc[tID](TRUE, uus);
 			uID = tID;
 		}
