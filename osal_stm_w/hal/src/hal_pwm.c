@@ -147,18 +147,11 @@ static void timer_pwm_deInit(HalIndeTimerIDsTypeDef id)
 /* 定时器 设置PWM占空比 */
 static void timer_pwm_SetDutyCycle(HalIndeTimerIDsTypeDef id, UINT8 eCh, UINT8 dutycycle)
 {
-	TIM_OCInitTypeDef  TIM_OCInitStructure;
+	UINT16 Pulse = 0;
 	TIM_TypeDef* TIMx = GetTimHandle(id);
 	
 	dutycycle = (dutycycle > 100) ? 100 : dutycycle;
-	/* 模式配置：PWM模式1 */
-	TIM_OCInitStructure.TIM_OCMode = m_TIM_OCInitStructure[id].TIM_OCMode;
-	/* 输出状态设置：使能输出 */
-	TIM_OCInitStructure.TIM_OutputState = m_TIM_OCInitStructure[id].TIM_OutputState;	
-	/* 设置跳变值，当计数器计数到这个值时，电平发生跳变 */
-	TIM_OCInitStructure.TIM_Pulse = m_uPeriod[id] * (dutycycle / 100.0);
-	/* 当定时器计数值小于CCR1_Val时为高电平 */
-	TIM_OCInitStructure.TIM_OCPolarity = m_TIM_OCInitStructure[id].TIM_OCPolarity;
+	Pulse = m_uPeriod[id] * (dutycycle / 100.0);
 	
 	switch (eCh)
 	{
@@ -166,36 +159,28 @@ static void timer_pwm_SetDutyCycle(HalIndeTimerIDsTypeDef id, UINT8 eCh, UINT8 d
 		/* 初始化定时器通道1输出PWM */
 		if (m_uMask[id] & HAL_PWM_MASK_CH1)
 		{
-			TIM_OC1Init(TIMx, &TIM_OCInitStructure);
-			/* 定时器比较输出通道1预装载配置：使能预装载 */
-			TIM_OC1PreloadConfig(TIMx, TIM_OCPreload_Enable);
+			TIM_SetCompare1(TIMx, Pulse);
 		}
 		break;
 	case HAL_PWM_CH2: //定时器通道2
 		/* 初始化定时器通道2输出PWM */
 		if (m_uMask[id] & HAL_PWM_MASK_CH2)
 		{
-			TIM_OC2Init(TIMx, &TIM_OCInitStructure);
-			/* 定时器比较输出通道2预装载配置：使能预装载 */
-			TIM_OC2PreloadConfig(TIMx, TIM_OCPreload_Enable);
+			TIM_SetCompare2(TIMx, Pulse);
 		}
 		break;
 	case HAL_PWM_CH3: //定时器通道3
 		/* 初始化定时器通道3输出PWM */
 		if (m_uMask[id] & HAL_PWM_MASK_CH3)
 		{
-			TIM_OC3Init(TIMx, &TIM_OCInitStructure);
-			/* 定时器比较输出通道3预装载配置：使能预装载 */
-			TIM_OC3PreloadConfig(TIMx, TIM_OCPreload_Enable);
+			TIM_SetCompare3(TIMx, Pulse);
 		}
 		break;
 	case HAL_PWM_CH4: //定时器通道4
 		/* 初始化定时器通道4输出PWM */
 		if (m_uMask[id] & HAL_PWM_MASK_CH4)
 		{
-			TIM_OC4Init(TIMx, &TIM_OCInitStructure);
-			/* 定时器比较输出通道4预装载配置：使能预装载 */
-			TIM_OC4PreloadConfig(TIMx, TIM_OCPreload_Enable);
+			TIM_SetCompare4(TIMx, Pulse);
 		}
 		break;
 	default:

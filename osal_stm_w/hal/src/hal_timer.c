@@ -53,6 +53,57 @@ static UINT16 m_uShareTimerCount = 0;
 /* 独立定时器初始化操作句柄 */
 static HalTimeInit_t m_hTimerInitFunc[INDE_TIMER_MAX] = {NULL};
 
+/* 定时器1初始化 */
+static void timer1_init(BOOL bIsOn, UINT32 uus)
+{
+    TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+	static BOOL bInit = FALSE;
+
+	if (bIsOn && (uus > 0))
+	{
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE); //时钟使能
+		
+		TIM_DeInit(TIM1);
+		//定时器TIM2初始化
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //4-1 设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
+		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
+		TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
+	 
+		if (!bInit)//中断优先级NVIC设置
+		{
+			NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+			NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_IRQn;  //TIM3中断
+			NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  //先占优先级0级
+			NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  //从优先级3级
+			NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
+			NVIC_Init(&NVIC_InitStructure);  //初始化NVIC寄存器
+			bInit = TRUE;
+		}
+		
+		/* 清除计数器中断标志位 */
+		TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+		TIM_ClearFlag(TIM1, TIM_FLAG_Update);//清除中断标志位
+		TIM_ITConfig(TIM1,TIM_IT_Update,ENABLE ); //使能指定的TIM2中断,允许更新中断
+		TIM_Cmd(TIM1, ENABLE);  //使能TIMx	
+	}
+	else
+	{
+		TIM_ClearFlag(TIM1, TIM_FLAG_Update);//清除中断标志位
+		TIM_ITConfig(TIM1,TIM_IT_Update,DISABLE ); //禁止指定的TIM3中断,允许更新中断
+		TIM_Cmd(TIM1, DISABLE);  //禁止TIMx	
+		TIM_DeInit(TIM1);
+	}
+}
+
+/* 定时器1清零 */
+static void timer1_clear(void)
+{
+	TIM_SetCounter(TIM1, 0);
+}
+
 /* 定时器2初始化 */
 static void timer2_init(BOOL bIsOn, UINT32 uus)
 {
@@ -66,8 +117,8 @@ static void timer2_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM2);
 		//定时器TIM2初始化
-		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =35; //4-1 设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //4-1 设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -115,8 +166,8 @@ static void timer3_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM3);
 		//定时器TIM3初始化
-		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -164,8 +215,8 @@ static void timer4_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM4);
 		//定时器TIM4初始化
-		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -214,8 +265,8 @@ static void timer5_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM5);
 		//定时器TIM5初始化
-		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -263,8 +314,8 @@ static void timer6_init(BOOL bIsOn, UINT32 uus)
 		
 		TIM_DeInit(TIM6);
 		//定时器TIM6初始化
-		TIM_TimeBaseStructure.TIM_Period = 2*uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
-		TIM_TimeBaseStructure.TIM_Prescaler =35; //设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //设置用来作为TIMx时钟频率除数的预分频值
 		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
 		TIM_TimeBaseInit(TIM6, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
@@ -350,6 +401,69 @@ static void timer7_init(BOOL bIsOn, UINT32 ums)
 //	TIM_SetCounter(TIM7, 0);
 //}
 
+/* 定时器8初始化 */
+static void timer8_init(BOOL bIsOn, UINT32 uus)
+{
+    TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+	static BOOL bInit = FALSE;
+
+	if (bIsOn && (uus > 0))
+	{
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE); //时钟使能
+		
+		TIM_DeInit(TIM8);
+		//定时器TIM2初始化
+		TIM_TimeBaseStructure.TIM_Period = uus-1; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值	
+		TIM_TimeBaseStructure.TIM_Prescaler =71; //4-1 设置用来作为TIMx时钟频率除数的预分频值
+		TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
+		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
+		TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure); //根据指定的参数初始化TIMx的时间基数单位
+	 
+		if (!bInit)//中断优先级NVIC设置
+		{
+			NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+			NVIC_InitStructure.NVIC_IRQChannel = TIM8_UP_IRQn;  //TIM3中断
+			NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  //先占优先级0级
+			NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  //从优先级3级
+			NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
+			NVIC_Init(&NVIC_InitStructure);  //初始化NVIC寄存器
+			bInit = TRUE;
+		}
+		
+		/* 清除计数器中断标志位 */
+		TIM_ClearITPendingBit(TIM8, TIM_IT_Update);
+		TIM_ClearFlag(TIM8, TIM_FLAG_Update);//清除中断标志位
+		TIM_ITConfig(TIM8,TIM_IT_Update,ENABLE ); //使能指定的TIM2中断,允许更新中断
+		TIM_Cmd(TIM8, ENABLE);  //使能TIMx	
+	}
+	else
+	{
+		TIM_ClearFlag(TIM8, TIM_FLAG_Update);//清除中断标志位
+		TIM_ITConfig(TIM8,TIM_IT_Update,DISABLE ); //禁止指定的TIM3中断,允许更新中断
+		TIM_Cmd(TIM8, DISABLE);  //禁止TIMx	
+		TIM_DeInit(TIM8);
+	}
+}
+
+/* 定时器8清零 */
+static void timer8_clear(void)
+{
+	TIM_SetCounter(TIM8, 0);
+}
+
+/* 定时器1中断服务程序 */
+void TIM1_UP_IRQHandler(void)
+{
+	if (TIM_GetITStatus(TIM1, TIM_IT_Update) != RESET)  //检查TIM2更新中断发生与否
+	{
+		TIM_ClearITPendingBit(TIM1, TIM_IT_Update);  //清除TIMx更新中断标志 
+		
+		if (m_hIndeTimer[INDE_TIMER_TIM1] != NULL)
+			m_hIndeTimer[INDE_TIMER_TIM1]();
+	}
+}
+
 /* 定时器2中断服务程序 */
 void TIM2_IRQHandler(void)
 {
@@ -433,23 +547,35 @@ void TIM7_IRQHandler(void)
 	}
 }
 
+/* 定时器1中断服务程序 */
+void TIM8_UP_IRQHandler(void)
+{
+	if (TIM_GetITStatus(TIM8, TIM_IT_Update) != RESET)  //检查TIM2更新中断发生与否
+	{
+		TIM_ClearITPendingBit(TIM8, TIM_IT_Update);  //清除TIMx更新中断标志 
+		
+		if (m_hIndeTimer[INDE_TIMER_TIM8] != NULL)
+			m_hIndeTimer[INDE_TIMER_TIM8]();
+	}
+}
+
 static void InitIndtTimers(void)
 {
-	//m_hTimerInitFunc[INDE_TIMER_TIM1] = timer1_init;
+	m_hTimerInitFunc[INDE_TIMER_TIM1] = timer1_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM2] = timer2_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM3] = timer3_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM4] = timer4_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM5] = timer5_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM6] = timer6_init;
-	//m_hTimerInitFunc[INDE_TIMER_TIM8] = timer8_init;
+	m_hTimerInitFunc[INDE_TIMER_TIM8] = timer8_init;
 	
-	//m_hClearTimer[INDE_TIMER_TIM1] = timer1_clear;
+	m_hClearTimer[INDE_TIMER_TIM1] = timer1_clear;
 	m_hClearTimer[INDE_TIMER_TIM2] = timer2_clear;
 	m_hClearTimer[INDE_TIMER_TIM3] = timer3_clear;
 	m_hClearTimer[INDE_TIMER_TIM4] = timer4_clear;
 	m_hClearTimer[INDE_TIMER_TIM5] = timer5_clear;
 	m_hClearTimer[INDE_TIMER_TIM6] = timer6_clear;
-	//m_hClearTimer[INDE_TIMER_TIM8] = timer8_clear;
+	m_hClearTimer[INDE_TIMER_TIM8] = timer8_clear;
 }
 
 /**
