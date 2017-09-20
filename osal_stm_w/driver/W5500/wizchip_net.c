@@ -8,8 +8,8 @@
 
 #if (defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
 //! CS
-#define WIZCHIP_CS_ON	HalGpioWrite(WIZCHIP_CS_GPIO_TYPE, WIZCHIP_CS_GPIO_PIN, 1)
-#define WIZCHIP_CS_OFF	HalGpioWrite(WIZCHIP_CS_GPIO_TYPE, WIZCHIP_CS_GPIO_PIN, 0)
+#define WIZCHIP_CS_ON	HalGpioWriteBit(WIZCHIP_CS_GPIO_TYPE, WIZCHIP_CS_GPIO_PIN, 1)
+#define WIZCHIP_CS_OFF	HalGpioWriteBit(WIZCHIP_CS_GPIO_TYPE, WIZCHIP_CS_GPIO_PIN, 0)
 
 static HALSpiTypeDef *m_hspi = NULL;
 //static wiz_NetInfo m_WIZNETINFO;
