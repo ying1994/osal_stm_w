@@ -516,9 +516,9 @@ int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo, BOOL bSetNet)
 	New();
 	HalGpioInit(WIZCHIP_CS_GPIO_TYPE, WIZCHIP_CS_GPIO_PIN, HAL_GPIOMode_Out_PP);
 	HalGpioInit(WIZCHIP_RST_GPIO_TYPE, WIZCHIP_RST_GPIO_PIN, HAL_GPIOMode_Out_PP);
-	HalGpioWrite(WIZCHIP_RST_GPIO_TYPE, WIZCHIP_RST_GPIO_PIN, 0);
+	HalGpioWriteBit(WIZCHIP_RST_GPIO_TYPE, WIZCHIP_RST_GPIO_PIN, 0);
 	delay_ms(100);
-	HalGpioWrite(WIZCHIP_RST_GPIO_TYPE, WIZCHIP_RST_GPIO_PIN, 1);
+	HalGpioWriteBit(WIZCHIP_RST_GPIO_TYPE, WIZCHIP_RST_GPIO_PIN, 1);
 	
 	TRACE("hspi=%p netinfo=%p\r\n", hspi, netinfo);
 	if ((hspi != NULL) && (netinfo != NULL))

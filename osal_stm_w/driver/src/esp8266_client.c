@@ -179,7 +179,7 @@ void esp8266_client_Init(HALUartTypeDef* hUart, BOOL bConetServer)
 	if (m_hUart != NULL)
 	{
 		HalGpioInit(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, HAL_GPIOMode_Out_PP);
-		HalGpioWrite(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, TRUE);
+		HalGpioWriteBit(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, TRUE);
 		m_hUart->init();//默认 115200, N, 8, 1
 		m_hUart->add_rx_obser(OnComm);
 		
@@ -564,10 +564,10 @@ void esp8266_client_ClrData(void)
 void esp8266_client_reset(void)
 {
 	esp8266_client_StopTransparent();	//退出透传模式
-	HalGpioWrite(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, FALSE);	//复位
+	HalGpioWriteBit(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, FALSE);	//复位
 	delay(2000);
 	
-	HalGpioWrite(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, TRUE);	//结束复位
+	HalGpioWriteBit(ESP8266_RST_GPIO_TYPE, ESP8266_RST_GPIO_PIN, TRUE);	//结束复位
 	delay(1000);
 }
 
