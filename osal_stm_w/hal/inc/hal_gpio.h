@@ -50,11 +50,19 @@ void HalGpioInit(HANDLE gpiox, UINT32 pin, HAL_GPIOMODE_TYPE mode);
 /**
  * @brief: 写GPIO数据
  * @param: gpiox GPIO类型
+ * @param: value GPIO写入的值
+ * @return: void
+ */
+void HalGpioWrite(HANDLE gpiox, UINT16 value);
+
+/**
+ * @brief: 写GPIO数据
+ * @param: gpiox GPIO类型
  * @param: pin GPIO端口引脚号
  * @param: bOn GPIO电平状态（TRUE为高，FALSE为低）
  * @return: void
  */
-void HalGpioWrite(HANDLE gpiox, UINT32 pin, BOOL bOn);
+void HalGpioWriteBit(HANDLE gpiox, UINT32 pin, BOOL bOn);
 
 /**
  * @brief: 读GPIO输入端口
