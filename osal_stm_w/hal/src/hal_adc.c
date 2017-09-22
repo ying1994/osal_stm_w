@@ -20,12 +20,13 @@
 
 #if defined(CFG_HAL_ADC) && defined(CFG_HAL_GPIO)
 
+
 /**
  * @brief ADC通道关联GPIO资源, 指定的GPIO将自动配置为模拟输入
  * @param numer ADC端口号 @ref HALAdcNumer
  * @param channel ADC通道号 @ref HAL_ADC_channels
- * @param gpiox GPIO类型
- * @param pin GPIO端口引脚号
+ * @param gpiox GPIO类型 @ref HAL_ADC_Channel_Pins
+ * @param pin GPIO端口引脚号 @ref HAL_ADC_Channel_Pins
  * @retval void
  */
 void HalAdcGpioRegist(HALAdcNumer numer, UINT8 channel, HANDLE gpiox, UINT32 pin)
@@ -40,11 +41,10 @@ void HalAdcGpioRegist(HALAdcNumer numer, UINT8 channel, HANDLE gpiox, UINT32 pin
  * @param mode 工作模式 @ref HAL_ADC_mode
  * @param trigger 触发方式 @ref HAL_ADC_external_trigger_sources_for_regular_channels_conversion
  * @param dataAlign 对齐方式 @ref HAL_ADC_data_align
- * @param DMAState DMA使能状态
  * @retval void
  * @attention 初始化之前勿必先通道 HalAdcGpioRegist() 函数关联GPIO资源 
  */
-void HalAdcInit (HALAdcNumer numer, UINT32 mode, UINT32 trigger, UINT32 dataAlign, FunctionalState DMAState)
+void HalAdcInit (HALAdcNumer numer, UINT32 mode, UINT32 trigger, UINT32 dataAlign)
 {
 	ADC_TypeDef* ADCx = NULL;
 	ADC_InitTypeDef ADC_InitStructure;
@@ -70,22 +70,25 @@ void HalAdcInit (HALAdcNumer numer, UINT32 mode, UINT32 trigger, UINT32 dataAlig
 	}
 	
 	/* 配置ADC1, 不用DMA, 用软件自己触发 */
-	ADC_InitStructure.ADC_Mode = mode;
-	ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-	ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
-	ADC_InitStructure.ADC_ExternalTrigConv = trigger;
-	ADC_InitStructure.ADC_DataAlign = dataAlign;
-	ADC_InitStructure.ADC_NbrOfChannel = 1;
+	ADC_InitStructure.ADC_Mode = mode; //工作模式
+	ADC_InitStructure.ADC_ScanConvMode = DISABLE;	//禁止扫描模式，多通道才要，单通道不需要
+	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE; //连续转换模式
+	ADC_InitStructure.ADC_ExternalTrigConv = trigger; //触发方式
+	ADC_InitStructure.ADC_DataAlign = dataAlign; //数据对齐方式
+	ADC_InitStructure.ADC_NbrOfChannel = 1; //通道数
 	ADC_Init(ADCx, &ADC_InitStructure);
 
+	/* 配置ADC时钟为PCLK2的8分频，即9MHz */
+	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+	
 	/* ADC1 regular channel14 configuration */
 	//ADC_RegularChannelConfig(ADCx, ADC_Channel_14, 1, ADC_SampleTime_55Cycles5);
 
 	/* Enable ADC DMA */
-	ADC_DMACmd(ADCx, DMAState);
+	//ADC_DMACmd(ADCx, DMAState);
 
 	/* Enable ADC */
-	ADC_Cmd(ADCx, DISABLE);
+	ADC_Cmd(ADCx, ENABLE);
 
 	/* Enable ADC reset calibaration register */
 	ADC_ResetCalibration(ADCx);
@@ -98,7 +101,7 @@ void HalAdcInit (HALAdcNumer numer, UINT32 mode, UINT32 trigger, UINT32 dataAlig
 	while(ADC_GetCalibrationStatus(ADCx));
 
 	/* Start ADC Software Conversion */
-	ADC_SoftwareStartConvCmd(ADCx, ENABLE);
+	//ADC_SoftwareStartConvCmd(ADCx, ENABLE);
 }
 
 /**
@@ -175,7 +178,7 @@ UINT16 HalAdcReadAvg (HALAdcNumer numer, UINT8 channel, UINT16 count )
 	for (i=0; i<count; i++)
 	{
 		ADC_SoftwareStartConvCmd(ADCx, ENABLE);	/* 软件启动下次ADC转换 */
-		HalIwdgFred();
+		HalIwdgFred();//喂狗防止转换次数过多而导致看门狗启动
 		while (!ADC_GetFlagStatus(ADCx, ADC_FLAG_EOC));
 		uVal = ADC_GetConversionValue(ADCx);
 		uSum += uVal;
