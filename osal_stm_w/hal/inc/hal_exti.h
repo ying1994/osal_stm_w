@@ -30,6 +30,20 @@
 typedef void (*HalExtiCBlack_t)(void);
 
 /**
+ * @brief 外部中断羊端口
+ */
+typedef enum
+{
+	HAL_EXTI_PORTA = GPIO_PortSourceGPIOA,	/*!< 外部中断端口A */
+	HAL_EXTI_PORTB = GPIO_PortSourceGPIOB,	/*!< 外部中断端口B */
+	HAL_EXTI_PORTC = GPIO_PortSourceGPIOC,	/*!< 外部中断端口C */
+	HAL_EXTI_PORTD = GPIO_PortSourceGPIOD,	/*!< 外部中断端口D */
+	HAL_EXTI_PORTE = GPIO_PortSourceGPIOE,	/*!< 外部中断端口E */
+	HAL_EXTI_PORTF = GPIO_PortSourceGPIOF,	/*!< 外部中断端口F */
+	HAL_EXTI_PORTG = GPIO_PortSourceGPIOG,	/*!< 外部中断端口G */
+}HAL_EXTI_PORT;
+
+/**
  * @brief 外部中断源
  */
 typedef enum
@@ -74,10 +88,10 @@ typedef enum
 
 /**
  * @brief 注册一个外部事件中断
- * @param hPortSource: 外部事件中断触发端口
- * @param eSource: 中断源
- * @param eMode: 中断工作方式
- * @param eTrigger: 中断触发方式
+ * @param hPortSource: 外部事件中断触发端口 @ref HAL_EXTI_PORT
+ * @param eSource: 中断源 @ref HAL_EXTI_SOURCE
+ * @param eMode: 中断工作方式 @ref HAL_EXTI_MODE
+ * @param eTrigger: 中断触发方式 @ref HAL_EXTI_TRIGGER
  * @param hExtiEventCallBlack: 中断事件回调函数句柄
  * @retval None
  */

@@ -23,10 +23,10 @@ static HalExtiCBlack_t m_hExtiEventCB[HAL_EXTI_SOURCE_MAX] = {NULL};
 
 /**
  * @brief 注册一个外部事件中断
- * @param hPortSource: 外部事件中断触发端口
- * @param eSource: 中断源
- * @param eMode: 中断工作方式
- * @param eTrigger: 中断触发方式
+ * @param hPortSource: 外部事件中断触发端口 @ref HAL_EXTI_PORT
+ * @param eSource: 中断源 @ref HAL_EXTI_SOURCE
+ * @param eMode: 中断工作方式 @ref HAL_EXTI_MODE
+ * @param eTrigger: 中断触发方式 @ref HAL_EXTI_TRIGGER
  * @param hExtiEventCB: 中断事件回调函数句柄
  * @retval None
  */
