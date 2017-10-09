@@ -188,8 +188,8 @@ UINT16 HalAdcReadAvg (HALAdcNumer numer, UINT8 channel, UINT16 count )
 	
 	if (count >= 10)
 	{
-		uSum -= (uMax - uMin);
-		count >>= 1;
+		uSum -= (uMax + uMin);
+		count -= 2;
 	}
 	
 	return (UINT16)(uSum / count);
