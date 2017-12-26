@@ -35,12 +35,12 @@ static UINT8 w25x16_GetStatus()
 	if (NULL == m_hspi)
 		return 0;
 	
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	
     m_hspi->access( W25X16_CMD_RD_ST );
     status=m_hspi->access(0XFF);
 	
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 	
 	return status;
 }
@@ -62,23 +62,23 @@ int w25x16_Init(HALSpiTypeDef *hspi)
 	m_hspi = hspi;
 	
 	//禁止写操作
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	m_hspi->access( W25X16_CMD_WR_DI );
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 	
 	//读取芯片ID
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	m_hspi->access( W25X16_CMD_JEDEC_ID );
 	uID = m_hspi->access(0XFF);
 	uID |= (m_hspi->access(0XFF) << 8);
 	uID |= (m_hspi->access(0XFF) << 16);
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 
 	//写状态
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	m_hspi->access( W25X16_CMD_WR_ST );
 	m_hspi->access(0);
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 	
 	return 0;
 }
@@ -124,12 +124,12 @@ UINT32 w25x16_Read(UINT32 offset, UINT8* buf, UINT32 size)
 		return 0;
 	
 	//禁止写操作
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	m_hspi->access( W25X16_CMD_WR_DI );
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 	
 	//读数据
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	
 	m_hspi->access( W25X16_CMD_READ );
 	m_hspi->access( (offset >> 16) & 0xff );
@@ -139,7 +139,7 @@ UINT32 w25x16_Read(UINT32 offset, UINT8* buf, UINT32 size)
 	for (i = 0; i < size; i++)
 		buf[i] = m_hspi->access(0xff);
 	
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 	
 	return size;
 }
@@ -188,29 +188,29 @@ UINT32 w25x16_Write(UINT32 offset, const UINT8* buf, UINT32 size)
 		if (bValue)//数据有变化，更新EEPROM
 		{
 			//使能写操作
-			HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+			HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 			m_hspi->access( W25X16_CMD_WR_EN );
-			HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+			HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 			
 			//擦除扇区
-			HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+			HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 			m_hspi->access( W25X16_CMD_ERASE_4K );
 			m_hspi->access( uWriteAddr );
 			m_hspi->access( uWriteAddr );
 			m_hspi->access( uWriteAddr );
-			HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+			HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 
 			WAIT_BUSY;
 			
 			for(idx=0; idx<W25X16_SECTOR_SIZE; )
 			{
 				//使能写操作
-				HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+				HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 				m_hspi->access( W25X16_CMD_WR_EN );
-				HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+				HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 				
 				//页编程
-				HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+				HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 				m_hspi->access( W25X16_CMD_PAGE_PROG );
 				m_hspi->access( uWriteAddr );
 				m_hspi->access( uWriteAddr );
@@ -220,7 +220,7 @@ UINT32 w25x16_Write(UINT32 offset, const UINT8* buf, UINT32 size)
 				//写数据
 				for(i=0; i<W25X16_PAGE_SIZE; i++)
 					m_hspi->access( byFlashData[idx++] );
-				HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+				HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 				
 				WAIT_BUSY;
 			}
@@ -230,9 +230,9 @@ UINT32 w25x16_Write(UINT32 offset, const UINT8* buf, UINT32 size)
 	}
 	
 	//禁止写操作
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, FALSE);
 	m_hspi->access( W25X16_CMD_WR_DI );
-	HalGpioWrite(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
+	HalGpioWriteBit(W25X16_CS_GPIO_TYPE, W25X16_CS_GPIO_PIN, TRUE);
 	
 	return size;
 }
