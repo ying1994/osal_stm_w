@@ -28,14 +28,14 @@
 #include "Ethernet/wizchip_conf.h"
 
 //! CS
-#define WIZCHIP_CS_GPIO_TYPE	SPI1_GPIO_TYPE 
-#define WIZCHIP_CS_GPIO_PIN		SPI1_NSS 
+#define WIZCHIP_CS_GPIO_TYPE	SPI2_GPIO_TYPE 
+#define WIZCHIP_CS_GPIO_PIN		SPI2_NSS 
 
-#define WIZCHIP_RST_GPIO_TYPE	GPIOB 
-#define WIZCHIP_RST_GPIO_PIN	GPIO_Pin_1
+#define WIZCHIP_RST_GPIO_TYPE	GPIOD 
+#define WIZCHIP_RST_GPIO_PIN	GPIO_Pin_15
 
-#define WIZCHIP_INT_GPIO_TYPE	GPIOB 
-#define WIZCHIP_INT_GPIO_PIN	GPIO_Pin_0 
+#define WIZCHIP_INT_GPIO_TYPE	GPIOD 
+#define WIZCHIP_INT_GPIO_PIN	GPIO_Pin_14 
 
 #define SOCK_TCP_SERVER        0
 #define SOCK_UDP_SERVER        1
@@ -43,7 +43,21 @@
 #define SOCK_UDP_CLIENT        3
 
 
-#define SOCKET_DATA_BUF_SIZE   1024
+#define SOCKET_DATA_BUF_SIZE   512
+
+typedef enum {
+	WIZCHIP_NET_CH0 = 0,
+	WIZCHIP_NET_CH1,
+	WIZCHIP_NET_CH2,
+	WIZCHIP_NET_CH3,
+#if _WIZCHIP_ > 5100
+	WIZCHIP_NET_CH4,
+	WIZCHIP_NET_CH5,
+	WIZCHIP_NET_CH6,
+	WIZCHIP_NET_CH7,
+#endif  
+	WIZCHIP_NET_SIZE,
+}EnWizchipNetChannel;
 
 /**
  * @brief W5500 初始化
@@ -76,14 +90,14 @@ int vizchip_net_start(UINT8 sn, UINT8 mode, UCHAR* server, UINT16 port);
  * @param 
  * @retval 初始化成功返回0, 否则返回-1
  */
-int vizchip_net_stop(void);
+int vizchip_net_stop(UINT8 sn);
 
 /**
  * @brief: 获取指定端口串口通讯句柄
  * @param 
  * @retval: 指定端口串口通讯句柄
  */
-HALUartTypeDef* vizchip_net_getinstance(void);
+HALUartTypeDef* vizchip_net_getinstance(UINT8 sn);
 
 #endif //CFG_USE_NET
 #endif   // _WIZCHIP_NET_H_

@@ -246,7 +246,14 @@ void application_init(void)
 	
 	hspi = HalSpiGetInstance(HALSpiNumer1);
 	wizchip_net_Init(hspi, &netinfo, TRUE);
-	vizchip_net_start(SOCK_TCP_SERVER, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	vizchip_net_start(WIZCHIP_NET_CH0, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH1, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH2, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH3, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH4, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH5, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH6, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	//vizchip_net_start(WIZCHIP_NET_CH7, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
 #endif //CFG_WIZCHIP
 #endif //CFG_USE_NET
 
