@@ -80,7 +80,7 @@ static void timer_pwm_init(HalIndeTimerIDsTypeDef id, UINT32 uus, UINT16 OCMode,
 	m_TIM_OCInitStructure[id].TIM_OutputState = TIM_OutputState_Enable;	
 	/* 互补通道输出状态设置：使能输出 */
 	if ((TIMx == TIM1) || (TIMx == TIM8))
-		m_TIM_OCInitStructure[id].TIM_OutputNState = TIM_OutputNState_Enable;
+		m_TIM_OCInitStructure[id].TIM_OutputNState = TIM_OutputNState_Disable;
 	/* 设置跳变值，当计数器计数到这个值时，电平发生跳变 */
 	m_TIM_OCInitStructure[id].TIM_Pulse = 0;
 	/* 当定时器计数值小于CCR1_Val时为高电平 */
