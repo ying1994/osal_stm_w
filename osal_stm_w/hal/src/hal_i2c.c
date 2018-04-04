@@ -24,12 +24,14 @@
 #define I2C1_SDA_R	GPIO_ReadInputDataBit(I2C1_GPIO_TYPE, I2C1_SDA)
 #define I2C1_SCL_H	GPIO_SetBits(I2C1_GPIO_TYPE, I2C1_SCL)
 #define I2C1_SCL_L	GPIO_ResetBits(I2C1_GPIO_TYPE, I2C1_SCL)
+#define I2C1_SCL_R	GPIO_ReadInputDataBit(I2C1_GPIO_TYPE, I2C1_SCL)
 
 #define I2C2_SDA_H	GPIO_SetBits(I2C2_GPIO_TYPE, I2C2_SDA)
 #define I2C2_SDA_L	GPIO_ResetBits(I2C2_GPIO_TYPE, I2C2_SDA)
 #define I2C2_SDA_R	GPIO_ReadInputDataBit(I2C2_GPIO_TYPE, I2C2_SDA)
 #define I2C2_SCL_H	GPIO_SetBits(I2C2_GPIO_TYPE, I2C2_SCL)
 #define I2C2_SCL_L	GPIO_ResetBits(I2C2_GPIO_TYPE, I2C2_SCL)
+#define I2C2_SCL_R	GPIO_ReadInputDataBit(I2C2_GPIO_TYPE, I2C2_SCL)
 
 
 /** I2C GPIO 初始化结构 */
@@ -388,6 +390,33 @@ static int i2c1_readEx(UINT16 uAddress, UCHAR* pBuff, UINT32 size, UINT32 wt, UI
 	return size;
 }
 
+/**
+ * @brief 检查I2C是否产生死锁
+ * @param 
+ * @retval 死锁返回TRUE，否则返回FALSE
+ */
+BOOL i2c1_checkLock(void)
+{
+	return I2C1_SCL_R && !I2C1_SDA_R;
+}
+
+/**
+ * @brief I2C解锁. 连发9个SCL脉冲解锁
+ * @param 
+ * @retval None
+ */
+void i2c1_unlock(void)
+{
+	int i=0;
+	I2C1_SCL_H;						//拉高SCL线
+	for (i=0; i<9; i++)
+	{
+		usleep(m_uBaudrate[0]);
+		I2C1_SCL_L;						//拉低SCL线
+		usleep(m_uBaudrate[0]);
+		I2C1_SCL_H;						//拉高SCL线
+	}
+}
 
 //>>>>>>>>>>>>>>>>>>>>>>>>> I2C2操作 <<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -739,6 +768,34 @@ static int i2c2_readEx(UINT16 uAddress, UCHAR* pBuff, UINT32 size, UINT32 wt, UI
 	return size;
 }
 
+/**
+ * @brief 检查I2C是否产生死锁
+ * @param 
+ * @retval 死锁返回TRUE，否则返回FALSE
+ */
+BOOL i2c2_checkLock(void)
+{
+	return I2C2_SCL_R && !I2C2_SDA_R;
+}
+
+/**
+ * @brief I2C解锁. 连发9个SCL脉冲解锁
+ * @param 
+ * @retval None
+ */
+void i2c2_unlock(void)
+{
+	int i=0;
+	I2C2_SCL_H;						//拉高SCL线
+	for (i=0; i<9; i++)
+	{
+		usleep(m_uBaudrate[1]);
+		I2C2_SCL_L;						//拉低SCL线
+		usleep(m_uBaudrate[1]);
+		I2C2_SCL_H;						//拉高SCL线
+	}
+}
+
 
 /**
  * @brief 申请I2C操作结构对象
@@ -758,6 +815,8 @@ static void New(HALI2CNumer eChannel)
 		m_Instance[0].read = i2c1_read;
 		m_Instance[0].writeEx = i2c1_writeEx;
 		m_Instance[0].readEx = i2c1_readEx;
+		m_Instance[0].checkLock = i2c1_checkLock;
+		m_Instance[0].unlock = i2c1_unlock;
 		m_pthis[0] = &m_Instance[0];
 		m_pthis[0]->init();
 		break;
@@ -770,6 +829,8 @@ static void New(HALI2CNumer eChannel)
 		m_Instance[1].read = i2c2_read;
 		m_Instance[1].writeEx = i2c2_writeEx;
 		m_Instance[1].readEx = i2c2_readEx;
+		m_Instance[1].checkLock = i2c2_checkLock;
+		m_Instance[1].unlock = i2c2_unlock;
 		m_pthis[1] = &m_Instance[1];
 		m_pthis[1]->init();
 		break;

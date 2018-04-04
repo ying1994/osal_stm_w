@@ -115,6 +115,20 @@ typedef struct
 	 * @retval 操作成功返回实际读取的数据大小, 失败返回-1
 	 */
 	int (*readEx)(UINT16 uAddress, UCHAR* pBuff, UINT32 size, UINT32 wt, UINT32 rdelay);
+	
+	/**
+	 * @brief 检查I2C是否产生死锁
+	 * @param 
+	 * @retval 死锁返回TRUE，否则返回FALSE
+	 */
+	BOOL (*checkLock)(void);
+	
+	/**
+	 * @brief I2C解锁
+	 * @param 
+	 * @retval None
+	 */
+	void (*unlock)(void);
 }HALI2CTypeDef;
 
 
