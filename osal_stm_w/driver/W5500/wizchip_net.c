@@ -28,6 +28,16 @@ static UINT16 m_uPort[WIZCHIP_NET_SIZE] = {0};
 static UINT8 *m_szDestIp[WIZCHIP_NET_SIZE][4];
 static UINT16 m_uDestport;
 
+#ifdef USE_RT_THREAD
+#define WIZCHIP_NET_RT_WAITING_TIME RT_WAITING_FOREVER //获取互斥量等待时间
+typedef void (*ThreadTaskCback_t)(void* arg);
+static struct rt_mutex mutex_service;
+static const UINT8 WIZCHIP_CHECK_TASK_PRIO = 1;	//优先级
+static const UINT8 WIZCHIP_CHECK_TASK_TICK = 1;	//时间片
+static const UINT8 WIZCHIP_WIZCHIP_CHECK_TASK_STK_SIZE = 64;	//运行栈大小
+ALIGN(RT_ALIGN_SIZE) static unsigned char WIZCHIP_CHECK_TASK_STK[WIZCHIP_NET_SIZE][WIZCHIP_WIZCHIP_CHECK_TASK_STK_SIZE] = {0};	//运行栈
+static struct rt_thread wizchip_rt_handle[WIZCHIP_NET_SIZE] = {0};	//任务句柄
+#endif
 /**
  * @brief Default function to enable interrupt.
  * @note This function help not to access wrong address. If you do not describe this function or register any functions,
@@ -130,40 +140,48 @@ static void deInit(void)
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH0
 static void add_rx_obser0(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH0] = hrxobser;
 }
+#endif
 
 /**
  * @brief: 注册串口接收观察者
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH1
 static void add_rx_obser1(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH1] = hrxobser;
 }
+#endif
 
 /**
  * @brief: 注册串口接收观察者
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH2
 static void add_rx_obser2(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH2] = hrxobser;
 }
+#endif
 
 /**
  * @brief: 注册串口接收观察者
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH3
 static void add_rx_obser3(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH3] = hrxobser;
 }
+#endif
 
 #if _WIZCHIP_ > 5100
 /**
@@ -171,40 +189,48 @@ static void add_rx_obser3(HalUartCBack_t hrxobser)
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH4
 static void add_rx_obser4(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH4] = hrxobser;
 }
+#endif
 
 /**
  * @brief: 注册串口接收观察者
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH5
 static void add_rx_obser5(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH5] = hrxobser;
 }
+#endif
 
 /**
  * @brief: 注册串口接收观察者
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH6
 static void add_rx_obser6(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH6] = hrxobser;
 }
+#endif
 
 /**
  * @brief: 注册串口接收观察者
  * @param hrxobser: 串口接收观察者句柄
  * @retval: void
  */
+#ifdef WIZCHIP_NET_CH7
 static void add_rx_obser7(HalUartCBack_t hrxobser)
 {
 	m_hrxobser[WIZCHIP_NET_CH7] = hrxobser;
 }
+#endif
 #endif //# _WIZCHIP_ > 5100
 
 /**
@@ -246,6 +272,7 @@ static void set_parity(UINT16 parity)
 {
 }
 
+#ifdef WIZCHIP_NET_CH0
 static UINT16 read0(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH0] > 0)
@@ -330,7 +357,9 @@ static void write0(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
+#ifdef WIZCHIP_NET_CH1
 static UINT16 read1(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH1] > 0)
@@ -415,7 +444,9 @@ static void write1(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
+#ifdef WIZCHIP_NET_CH2
 static UINT16 read2(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH2] > 0)
@@ -500,7 +531,9 @@ static void write2(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
+#ifdef WIZCHIP_NET_CH3
 static UINT16 read3(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH3] > 0)
@@ -585,9 +618,11 @@ static void write3(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
 #if _WIZCHIP_ > 5100
 
+#ifdef WIZCHIP_NET_CH4
 static UINT16 read4(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH4] > 0)
@@ -672,7 +707,9 @@ static void write4(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
+#ifdef WIZCHIP_NET_CH5
 static UINT16 read5(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH5] > 0)
@@ -757,7 +794,9 @@ static void write5(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
+#ifdef WIZCHIP_NET_CH6
 static UINT16 read6(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH6] > 0)
@@ -842,7 +881,9 @@ static void write6(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif
 
+#ifdef WIZCHIP_NET_CH7
 static UINT16 read7(UCHAR *pdata, UINT16 len)
 {
 	if (m_uRecvSize[WIZCHIP_NET_CH7] > 0)
@@ -927,6 +968,7 @@ static void write7(UCHAR *pdata, UINT16 len)
 		break;
 	}
 }
+#endif //WIZCHIP_NET_CH
 #endif // _WIZCHIP_ > 5100
 
 /**
@@ -943,6 +985,7 @@ static void New(UINT8 sn)
 	{
 		switch (sn)
 		{
+#ifdef WIZCHIP_NET_CH0
 		case WIZCHIP_NET_CH0:
 			m_hInstance[sn].add_rx_obser = add_rx_obser0;
 			m_hInstance[sn].init = init;
@@ -956,6 +999,8 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
 		case WIZCHIP_NET_CH1:
 			m_hInstance[sn].add_rx_obser = add_rx_obser1;
 			m_hInstance[sn].init = init;
@@ -969,6 +1014,8 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
 		case WIZCHIP_NET_CH2:
 			m_hInstance[sn].add_rx_obser = add_rx_obser2;
 			m_hInstance[sn].init = init;
@@ -982,6 +1029,8 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
 		case WIZCHIP_NET_CH3:
 			m_hInstance[sn].add_rx_obser = add_rx_obser3;
 			m_hInstance[sn].init = init;
@@ -995,7 +1044,9 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
 #if _WIZCHIP_ > 5100
+#ifdef WIZCHIP_NET_CH4
 		case WIZCHIP_NET_CH4:
 			m_hInstance[sn].add_rx_obser = add_rx_obser4;
 			m_hInstance[sn].init = init;
@@ -1009,6 +1060,8 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
 		case WIZCHIP_NET_CH5:
 			m_hInstance[sn].add_rx_obser = add_rx_obser5;
 			m_hInstance[sn].init = init;
@@ -1022,6 +1075,8 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
 		case WIZCHIP_NET_CH6:
 			m_hInstance[sn].add_rx_obser = add_rx_obser6;
 			m_hInstance[sn].init = init;
@@ -1035,6 +1090,8 @@ static void New(UINT8 sn)
 			pthis[sn] = &m_hInstance[sn];
 			//pthis->init();
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
 		case WIZCHIP_NET_CH7:
 			m_hInstance[sn].add_rx_obser = add_rx_obser7;
 			m_hInstance[sn].init = init;
@@ -1049,20 +1106,33 @@ static void New(UINT8 sn)
 			//pthis->init();
 		break;
 #endif
+#endif
 		}
 	}
 }
 
+#ifdef WIZCHIP_NET_CH0
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer0(void)
+#else
+static void taskForTcpServer0(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH0];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH0);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH0);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH0);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -1077,7 +1147,7 @@ static void taskForTcpServer0(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH0,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH0] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH0] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH0](1);
@@ -1100,7 +1170,7 @@ static void taskForTcpServer0(void)
          if((ret=disconnect(WIZCHIP_NET_CH0)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH0));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH0));
          break;
@@ -1109,7 +1179,7 @@ static void taskForTcpServer0(void)
          if( (ret = listen(WIZCHIP_NET_CH0)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH0, m_uPort[WIZCHIP_NET_CH0]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -1117,7 +1187,7 @@ static void taskForTcpServer0(void)
          if((ret=socket(WIZCHIP_NET_CH0,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH0],0x00)) != WIZCHIP_NET_CH0)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH0));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH0));
          break;
@@ -1125,19 +1195,34 @@ static void taskForTcpServer0(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer0(void)
+#else
+static void taskForUdpServer0(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH0];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH0);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH0);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH0);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -1149,7 +1234,7 @@ static void taskForUdpServer0(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH0,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH0] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH0] != NULL)
@@ -1163,7 +1248,7 @@ static void taskForUdpServer0(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH0,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1174,7 +1259,7 @@ static void taskForUdpServer0(void)
          if((ret=socket(WIZCHIP_NET_CH0,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH0],0x00)) != WIZCHIP_NET_CH0)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH0, m_uPort[WIZCHIP_NET_CH0]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH0, m_uPort[WIZCHIP_NET_CH0]));
          break;
@@ -1182,20 +1267,35 @@ static void taskForUdpServer0(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient0(void)
+#else
+static void taskForTcpClient0(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH0];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH0);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH0);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH0);
 	if (m_szServer[WIZCHIP_NET_CH0] != NULL);
 	{
 	   switch(sn_sr)
@@ -1212,7 +1312,7 @@ static void taskForTcpClient0(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH0,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH0] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH0] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH0](1);
@@ -1235,16 +1335,16 @@ static void taskForTcpClient0(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH0)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH0));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH0));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH0));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH0, m_szServer[WIZCHIP_NET_CH0][0], m_szServer[WIZCHIP_NET_CH0][1], m_szServer[WIZCHIP_NET_CH0][2], m_szServer[WIZCHIP_NET_CH0][3], m_uPort[WIZCHIP_NET_CH0]));
 			 if( (ret = connect(WIZCHIP_NET_CH0, m_szServer[WIZCHIP_NET_CH0], m_uPort[WIZCHIP_NET_CH0])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH0, m_szServer[WIZCHIP_NET_CH0][0], m_szServer[WIZCHIP_NET_CH0][1], m_szServer[WIZCHIP_NET_CH0][2], m_szServer[WIZCHIP_NET_CH0][3],  m_uPort));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -1252,7 +1352,7 @@ static void taskForTcpClient0(void)
 			 if((ret=socket(WIZCHIP_NET_CH0,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH0)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH0));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH0));
 			 break;
@@ -1261,25 +1361,46 @@ static void taskForTcpClient0(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient0(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient0(void)
+//#else
+//static void taskForUdpClient0(void* arg)
+//#endif
+//{
+//}
+#endif //WIZCHIP_NET_CH0
 
+#ifdef WIZCHIP_NET_CH1
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer1(void)
+#else
+static void taskForTcpServer1(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH1];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH1);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH1);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH1);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -1294,7 +1415,7 @@ static void taskForTcpServer1(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH1,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH1] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH1] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH1](1);
@@ -1306,7 +1427,7 @@ static void taskForTcpServer1(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH1);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1317,7 +1438,7 @@ static void taskForTcpServer1(void)
          if((ret=disconnect(WIZCHIP_NET_CH1)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH1));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH1));
          break;
@@ -1326,7 +1447,7 @@ static void taskForTcpServer1(void)
          if( (ret = listen(WIZCHIP_NET_CH1)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH1, m_uPort[WIZCHIP_NET_CH1]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -1334,7 +1455,7 @@ static void taskForTcpServer1(void)
          if((ret=socket(WIZCHIP_NET_CH1,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH1],0x00)) != WIZCHIP_NET_CH1)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH1));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH1));
          break;
@@ -1342,19 +1463,34 @@ static void taskForTcpServer1(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer1(void)
+#else
+static void taskForUdpServer1(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH1];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH1);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH1);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH1);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -1366,7 +1502,7 @@ static void taskForUdpServer1(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH1,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH1] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH1] != NULL)
@@ -1380,7 +1516,7 @@ static void taskForUdpServer1(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH1,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1391,7 +1527,7 @@ static void taskForUdpServer1(void)
          if((ret=socket(WIZCHIP_NET_CH1,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH1],0x00)) != WIZCHIP_NET_CH1)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH1, m_uPort[WIZCHIP_NET_CH1]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH1, m_uPort[WIZCHIP_NET_CH1]));
          break;
@@ -1399,20 +1535,35 @@ static void taskForUdpServer1(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient1(void)
+#else
+static void taskForTcpClient1(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH1];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH1);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH1);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH1);
 	if (m_szServer[WIZCHIP_NET_CH1] != NULL);
 	{
 	   switch(sn_sr)
@@ -1429,7 +1580,7 @@ static void taskForTcpClient1(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH1,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH1] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH1] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH1](1);
@@ -1441,7 +1592,7 @@ static void taskForTcpClient1(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH1);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -1452,16 +1603,16 @@ static void taskForTcpClient1(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH1)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH1));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH1));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH1));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH1, m_szServer[WIZCHIP_NET_CH1][0], m_szServer[WIZCHIP_NET_CH1][1], m_szServer[WIZCHIP_NET_CH1][2], m_szServer[WIZCHIP_NET_CH1][3], m_uPort[WIZCHIP_NET_CH1]));
 			 if( (ret = connect(WIZCHIP_NET_CH1, m_szServer[WIZCHIP_NET_CH1], m_uPort[WIZCHIP_NET_CH1])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH1, m_szServer[WIZCHIP_NET_CH1][0], m_szServer[WIZCHIP_NET_CH1][1], m_szServer[WIZCHIP_NET_CH1][2], m_szServer[WIZCHIP_NET_CH1][3],  m_uPort[WIZCHIP_NET_CH1]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -1469,7 +1620,7 @@ static void taskForTcpClient1(void)
 			 if((ret=socket(WIZCHIP_NET_CH1,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH1)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH1));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH1));
 			 break;
@@ -1478,25 +1629,46 @@ static void taskForTcpClient1(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient1(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient1(void)
+//#else
+//static void taskForUdpClient1(void* arg)
+//#endif
+//{
+//}
+#endif // WIZCHIP_NET_CH1
 
+#ifdef WIZCHIP_NET_CH2
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer2(void)
+#else
+static void taskForTcpServer2(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH2];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH2);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH2);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH2);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -1511,7 +1683,7 @@ static void taskForTcpServer2(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH2,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH2] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH2] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH2](1);
@@ -1523,7 +1695,7 @@ static void taskForTcpServer2(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH2);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1534,7 +1706,7 @@ static void taskForTcpServer2(void)
          if((ret=disconnect(WIZCHIP_NET_CH2)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH2));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH2));
          break;
@@ -1543,7 +1715,7 @@ static void taskForTcpServer2(void)
          if( (ret = listen(WIZCHIP_NET_CH2)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH2, m_uPort[WIZCHIP_NET_CH2]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -1551,7 +1723,7 @@ static void taskForTcpServer2(void)
          if((ret=socket(WIZCHIP_NET_CH2,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH2],0x00)) != WIZCHIP_NET_CH2)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH2));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH2));
          break;
@@ -1559,19 +1731,34 @@ static void taskForTcpServer2(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer2(void)
+#else
+static void taskForUdpServer2(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH2];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH2);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH2);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH2);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -1583,7 +1770,7 @@ static void taskForUdpServer2(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH2,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH2] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH2] != NULL)
@@ -1597,7 +1784,7 @@ static void taskForUdpServer2(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH2,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1608,7 +1795,7 @@ static void taskForUdpServer2(void)
          if((ret=socket(WIZCHIP_NET_CH2,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH2],0x00)) != WIZCHIP_NET_CH2)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH2, m_uPort[WIZCHIP_NET_CH2]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH2, m_uPort[WIZCHIP_NET_CH2]));
          break;
@@ -1616,20 +1803,35 @@ static void taskForUdpServer2(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient2(void)
+#else
+static void taskForTcpClient2(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH2];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH2);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH2);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH2);
 	if (m_szServer[WIZCHIP_NET_CH2] != NULL);
 	{
 	   switch(sn_sr)
@@ -1646,7 +1848,7 @@ static void taskForTcpClient2(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH2,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH2] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH2] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH2](1);
@@ -1658,7 +1860,7 @@ static void taskForTcpClient2(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH2);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -1669,16 +1871,16 @@ static void taskForTcpClient2(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH2)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH2));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH2));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH2));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH2, m_szServer[WIZCHIP_NET_CH2][0], m_szServer[WIZCHIP_NET_CH2][1], m_szServer[WIZCHIP_NET_CH2][2], m_szServer[WIZCHIP_NET_CH2][3], m_uPort[WIZCHIP_NET_CH2]));
 			 if( (ret = connect(WIZCHIP_NET_CH2, m_szServer[WIZCHIP_NET_CH2], m_uPort[WIZCHIP_NET_CH2])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH2, m_szServer[WIZCHIP_NET_CH2][0], m_szServer[WIZCHIP_NET_CH2][1], m_szServer[WIZCHIP_NET_CH2][2], m_szServer[WIZCHIP_NET_CH2][3],  m_uPort[WIZCHIP_NET_CH2]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -1686,7 +1888,7 @@ static void taskForTcpClient2(void)
 			 if((ret=socket(WIZCHIP_NET_CH2,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH2)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH2));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH2));
 			 break;
@@ -1695,25 +1897,46 @@ static void taskForTcpClient2(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient2(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient2(void)
+//#else
+//static void taskForUdpClient2(void* arg)
+//#endif
+//{
+//}
+#endif // WIZCHIP_NET_CH2
 
+#ifdef WIZCHIP_NET_CH3
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer3(void)
+#else
+static void taskForTcpServer3(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH3];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH3);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH3);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH3);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -1728,7 +1951,7 @@ static void taskForTcpServer3(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH3,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH3] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH3] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH3](1);
@@ -1740,7 +1963,7 @@ static void taskForTcpServer3(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH3);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1751,7 +1974,7 @@ static void taskForTcpServer3(void)
          if((ret=disconnect(WIZCHIP_NET_CH3)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH3));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH3));
          break;
@@ -1760,7 +1983,7 @@ static void taskForTcpServer3(void)
          if( (ret = listen(WIZCHIP_NET_CH3)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH3, m_uPort[WIZCHIP_NET_CH3]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -1768,7 +1991,7 @@ static void taskForTcpServer3(void)
          if((ret=socket(WIZCHIP_NET_CH3,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH3],0x00)) != WIZCHIP_NET_CH3)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH3));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH3));
          break;
@@ -1776,19 +1999,34 @@ static void taskForTcpServer3(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer3(void)
+#else
+static void taskForUdpServer3(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH3];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH3);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH3);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH3);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -1800,7 +2038,7 @@ static void taskForUdpServer3(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH3,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH3] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH3] != NULL)
@@ -1814,7 +2052,7 @@ static void taskForUdpServer3(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH3,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1825,7 +2063,7 @@ static void taskForUdpServer3(void)
          if((ret=socket(WIZCHIP_NET_CH3,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH3],0x00)) != WIZCHIP_NET_CH3)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH3, m_uPort[WIZCHIP_NET_CH3]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH3, m_uPort[WIZCHIP_NET_CH3]));
          break;
@@ -1833,20 +2071,35 @@ static void taskForUdpServer3(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient3(void)
+#else
+static void taskForTcpClient3(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH3];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH3);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH3);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH3);
 	if (m_szServer[WIZCHIP_NET_CH3] != NULL);
 	{
 	   switch(sn_sr)
@@ -1863,7 +2116,7 @@ static void taskForTcpClient3(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH3,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH3] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH3] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH3](1);
@@ -1875,7 +2128,7 @@ static void taskForTcpClient3(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH3);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -1886,16 +2139,16 @@ static void taskForTcpClient3(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH3)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH3));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH3));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH3));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH3, m_szServer[WIZCHIP_NET_CH3][0], m_szServer[WIZCHIP_NET_CH3][1], m_szServer[WIZCHIP_NET_CH3][2], m_szServer[WIZCHIP_NET_CH3][3], m_uPort[WIZCHIP_NET_CH3]));
 			 if( (ret = connect(WIZCHIP_NET_CH3, m_szServer[WIZCHIP_NET_CH3], m_uPort[WIZCHIP_NET_CH3])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH3, m_szServer[WIZCHIP_NET_CH3][0], m_szServer[WIZCHIP_NET_CH3][1], m_szServer[WIZCHIP_NET_CH3][2], m_szServer[WIZCHIP_NET_CH3][3],  m_uPort[WIZCHIP_NET_CH3]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -1903,7 +2156,7 @@ static void taskForTcpClient3(void)
 			 if((ret=socket(WIZCHIP_NET_CH3,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH3)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH3));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH3));
 			 break;
@@ -1912,26 +2165,47 @@ static void taskForTcpClient3(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient3(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient3(void)
+//#else
+//static void taskForUdpClient3(void* arg)
+//#endif
+//{
+//}
+#endif // WIZCHIP_NET_CH3
 
 #if _WIZCHIP_ > 5100
+#ifdef WIZCHIP_NET_CH4
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer4(void)
+#else
+static void taskForTcpServer4(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH4];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH4);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH4);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH4);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -1946,7 +2220,7 @@ static void taskForTcpServer4(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH4,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH4] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH4] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH4](1);
@@ -1958,7 +2232,7 @@ static void taskForTcpServer4(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH4);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -1969,7 +2243,7 @@ static void taskForTcpServer4(void)
          if((ret=disconnect(WIZCHIP_NET_CH4)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH4));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH4));
          break;
@@ -1978,7 +2252,7 @@ static void taskForTcpServer4(void)
          if( (ret = listen(WIZCHIP_NET_CH4)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH4, m_uPort[WIZCHIP_NET_CH4]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -1986,7 +2260,7 @@ static void taskForTcpServer4(void)
          if((ret=socket(WIZCHIP_NET_CH4,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH4],0x00)) != WIZCHIP_NET_CH4)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH4));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH4));
          break;
@@ -1994,19 +2268,34 @@ static void taskForTcpServer4(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer4(void)
+#else
+static void taskForUdpServer4(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH4];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH4);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH4);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH4);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -2018,7 +2307,7 @@ static void taskForUdpServer4(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH4,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH4] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH4] != NULL)
@@ -2032,7 +2321,7 @@ static void taskForUdpServer4(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH4,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2043,7 +2332,7 @@ static void taskForUdpServer4(void)
          if((ret=socket(WIZCHIP_NET_CH4,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH4],0x00)) != WIZCHIP_NET_CH4)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH4, m_uPort[WIZCHIP_NET_CH4]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH4, m_uPort[WIZCHIP_NET_CH4]));
          break;
@@ -2051,20 +2340,35 @@ static void taskForUdpServer4(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient4(void)
+#else
+static void taskForTcpClient4(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH4];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH4);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH4);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH4);
 	if (m_szServer[WIZCHIP_NET_CH4] != NULL);
 	{
 	   switch(sn_sr)
@@ -2081,7 +2385,7 @@ static void taskForTcpClient4(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH4,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH4] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH4] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH4](1);
@@ -2093,7 +2397,7 @@ static void taskForTcpClient4(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH4);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -2104,16 +2408,16 @@ static void taskForTcpClient4(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH4)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH4));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH4));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH4));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH4, m_szServer[WIZCHIP_NET_CH4][0], m_szServer[WIZCHIP_NET_CH4][1], m_szServer[WIZCHIP_NET_CH4][2], m_szServer[WIZCHIP_NET_CH4][3], m_uPort[WIZCHIP_NET_CH4]));
 			 if( (ret = connect(WIZCHIP_NET_CH4, m_szServer[WIZCHIP_NET_CH4], m_uPort[WIZCHIP_NET_CH4])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH4, m_szServer[WIZCHIP_NET_CH4][0], m_szServer[WIZCHIP_NET_CH4][1], m_szServer[WIZCHIP_NET_CH4][2], m_szServer[WIZCHIP_NET_CH4][3],  m_uPort[WIZCHIP_NET_CH4]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -2121,7 +2425,7 @@ static void taskForTcpClient4(void)
 			 if((ret=socket(WIZCHIP_NET_CH4,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH4)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH4));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH4));
 			 break;
@@ -2130,25 +2434,46 @@ static void taskForTcpClient4(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient4(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient4(void)
+//#else
+//static void taskForUdpClient4(void* arg)
+//#endif
+//{
+//}
+#endif // WIZCHIP_NET_CH4
 
+#ifdef WIZCHIP_NET_CH5
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer5(void)
+#else
+static void taskForTcpServer5(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH5];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH5);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH5);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH5);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -2163,7 +2488,7 @@ static void taskForTcpServer5(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH5,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH5] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH5] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH5](1);
@@ -2175,7 +2500,7 @@ static void taskForTcpServer5(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH5);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2186,7 +2511,7 @@ static void taskForTcpServer5(void)
          if((ret=disconnect(WIZCHIP_NET_CH5)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH5));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH5));
          break;
@@ -2195,7 +2520,7 @@ static void taskForTcpServer5(void)
          if( (ret = listen(WIZCHIP_NET_CH5)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH5, m_uPort[WIZCHIP_NET_CH5]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -2203,7 +2528,7 @@ static void taskForTcpServer5(void)
          if((ret=socket(WIZCHIP_NET_CH5,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH5],0x00)) != WIZCHIP_NET_CH5)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH5));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH5));
          break;
@@ -2211,19 +2536,34 @@ static void taskForTcpServer5(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer5(void)
+#else
+static void taskForUdpServer5(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH5];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH5);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH5);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH5);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -2235,7 +2575,7 @@ static void taskForUdpServer5(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH5,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH5] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH5] != NULL)
@@ -2249,7 +2589,7 @@ static void taskForUdpServer5(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH5,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2260,7 +2600,7 @@ static void taskForUdpServer5(void)
          if((ret=socket(WIZCHIP_NET_CH5,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH5],0x00)) != WIZCHIP_NET_CH5)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH5, m_uPort[WIZCHIP_NET_CH5]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH5, m_uPort[WIZCHIP_NET_CH5]));
          break;
@@ -2268,20 +2608,35 @@ static void taskForUdpServer5(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient5(void)
+#else
+static void taskForTcpClient5(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH5];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH5);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH5);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH5);
 	if (m_szServer[WIZCHIP_NET_CH5] != NULL);
 	{
 	   switch(sn_sr)
@@ -2298,7 +2653,7 @@ static void taskForTcpClient5(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH5,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH5] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH5] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH5](1);
@@ -2310,7 +2665,7 @@ static void taskForTcpClient5(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH5);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -2321,16 +2676,16 @@ static void taskForTcpClient5(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH5)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH5));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH5));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH5));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH5, m_szServer[WIZCHIP_NET_CH5][0], m_szServer[WIZCHIP_NET_CH5][1], m_szServer[WIZCHIP_NET_CH5][2], m_szServer[WIZCHIP_NET_CH5][3], m_uPort[WIZCHIP_NET_CH5]));
 			 if( (ret = connect(WIZCHIP_NET_CH5, m_szServer[WIZCHIP_NET_CH5], m_uPort[WIZCHIP_NET_CH5])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH5, m_szServer[WIZCHIP_NET_CH5][0], m_szServer[WIZCHIP_NET_CH5][1], m_szServer[WIZCHIP_NET_CH5][2], m_szServer[WIZCHIP_NET_CH5][3],  m_uPort[WIZCHIP_NET_CH5]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -2338,7 +2693,7 @@ static void taskForTcpClient5(void)
 			 if((ret=socket(WIZCHIP_NET_CH5,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH5)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH5));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH5));
 			 break;
@@ -2347,25 +2702,46 @@ static void taskForTcpClient5(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient5(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient5(void)
+//#else
+//static void taskForUdpClient5(void* arg)
+//#endif
+//{
+//}
+#endif // WIZCHIP_NET_CH5
 
+#ifdef WIZCHIP_NET_CH6
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer6(void)
+#else
+static void taskForTcpServer6(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH6];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH6);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH6);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH6);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -2380,7 +2756,7 @@ static void taskForTcpServer6(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH6,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH6] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH6] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH6](1);
@@ -2392,7 +2768,7 @@ static void taskForTcpServer6(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH6);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2403,7 +2779,7 @@ static void taskForTcpServer6(void)
          if((ret=disconnect(WIZCHIP_NET_CH6)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH6));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH6));
          break;
@@ -2412,7 +2788,7 @@ static void taskForTcpServer6(void)
          if( (ret = listen(WIZCHIP_NET_CH6)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH6, m_uPort[WIZCHIP_NET_CH6]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -2420,7 +2796,7 @@ static void taskForTcpServer6(void)
          if((ret=socket(WIZCHIP_NET_CH6,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH6],0x00)) != WIZCHIP_NET_CH6)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH6));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH6));
          break;
@@ -2428,19 +2804,34 @@ static void taskForTcpServer6(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer6(void)
+#else
+static void taskForUdpServer6(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH6];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH6);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH6);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH6);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -2452,7 +2843,7 @@ static void taskForUdpServer6(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH6,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH6] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH6] != NULL)
@@ -2466,7 +2857,7 @@ static void taskForUdpServer6(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH6,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2477,7 +2868,7 @@ static void taskForUdpServer6(void)
          if((ret=socket(WIZCHIP_NET_CH6,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH6],0x00)) != WIZCHIP_NET_CH6)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH6, m_uPort[WIZCHIP_NET_CH6]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH6, m_uPort[WIZCHIP_NET_CH6]));
          break;
@@ -2485,20 +2876,35 @@ static void taskForUdpServer6(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+	}
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient6(void)
+#else
+static void taskForTcpClient6(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH6];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH6);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH6);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH6);
 	if (m_szServer[WIZCHIP_NET_CH6] != NULL);
 	{
 	   switch(sn_sr)
@@ -2515,7 +2921,7 @@ static void taskForTcpClient6(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH6,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH6] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH6] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH6](1);
@@ -2527,7 +2933,7 @@ static void taskForTcpClient6(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH6);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -2538,16 +2944,16 @@ static void taskForTcpClient6(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH6)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH6));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH6));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH6));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH6, m_szServer[WIZCHIP_NET_CH6][0], m_szServer[WIZCHIP_NET_CH6][1], m_szServer[WIZCHIP_NET_CH6][2], m_szServer[WIZCHIP_NET_CH6][3], m_uPort[WIZCHIP_NET_CH6]));
 			 if( (ret = connect(WIZCHIP_NET_CH6, m_szServer[WIZCHIP_NET_CH6], m_uPort[WIZCHIP_NET_CH6])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH6, m_szServer[WIZCHIP_NET_CH6][0], m_szServer[WIZCHIP_NET_CH6][1], m_szServer[WIZCHIP_NET_CH6][2], m_szServer[WIZCHIP_NET_CH6][3],  m_uPort[WIZCHIP_NET_CH6]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -2555,7 +2961,7 @@ static void taskForTcpClient6(void)
 			 if((ret=socket(WIZCHIP_NET_CH6,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH6)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH6));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH6));
 			 break;
@@ -2564,25 +2970,46 @@ static void taskForTcpClient6(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient6(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient6(void)
+//#else
+//static void taskForUdpClient6(void* arg)
+//#endif
+//{
+//}
+#endif // WIZCHIP_NET_CH6
 
+#ifdef WIZCHIP_NET_CH7
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpServer7(void)
+#else
+static void taskForTcpServer7(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH7];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH7);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH7);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH7);
    switch(sn_sr)
    {
       case SOCK_ESTABLISHED :
@@ -2597,7 +3024,7 @@ static void taskForTcpServer7(void)
 				size = SOCKET_DATA_BUF_SIZE;
             ret = recv(WIZCHIP_NET_CH7,buf,size);
             if(ret <= 0)
-				return;
+				break;
 			m_uRecvSize[WIZCHIP_NET_CH7] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH7] != NULL)
 				m_hrxobser[WIZCHIP_NET_CH7](1);
@@ -2609,7 +3036,7 @@ static void taskForTcpServer7(void)
             //   if(ret < 0)
             //   {
             //      close(WIZCHIP_NET_CH7);
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2620,7 +3047,7 @@ static void taskForTcpServer7(void)
          if((ret=disconnect(WIZCHIP_NET_CH7)) != SOCK_OK)
 		 {
 			DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH7));
-			 return;
+			 break;
 		 }
          DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH7));
          break;
@@ -2629,7 +3056,7 @@ static void taskForTcpServer7(void)
          if( (ret = listen(WIZCHIP_NET_CH7)) != SOCK_OK)
 		 {
 			 DBG(TRACE("%d:Listen, port [%d] Field\r\n",WIZCHIP_NET_CH7, m_uPort[WIZCHIP_NET_CH7]));
-			 return;
+			 break;
 		 }
          break;
       case SOCK_CLOSED:
@@ -2637,7 +3064,7 @@ static void taskForTcpServer7(void)
          if((ret=socket(WIZCHIP_NET_CH7,Sn_MR_TCP,m_uPort[WIZCHIP_NET_CH7],0x00)) != WIZCHIP_NET_CH7)
 		 {
 			DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH7));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH7));
          break;
@@ -2645,19 +3072,34 @@ static void taskForTcpServer7(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+   }
+#endif
 }
 
 /**
  * @brief UDP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForUdpServer7(void)
+#else
+static void taskForUdpServer7(void* arg)
+#endif
 {
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH7];
 	UINT16 size = 0;
 	//UINT16 sentsize = 0;
 	INT32  ret;
    //uint8_t  packinfo = 0;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH7);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH7);
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH7);
    switch(sn_sr)
    {
       case SOCK_UDP :
@@ -2669,7 +3111,7 @@ static void taskForUdpServer7(void)
             if(ret <= 0)
             {
                DBG(TRACE("%d: recvfrom error. %ld\r\n",WIZCHIP_NET_CH7,ret));
-               return;
+               break;
             }
 			m_uRecvSize[WIZCHIP_NET_CH7] = ret;
 			if (m_hrxobser[WIZCHIP_NET_CH7] != NULL)
@@ -2683,7 +3125,7 @@ static void taskForUdpServer7(void)
             //   if(ret < 0)
             //   {
             //      DBG(TRACE("%d: sendto error. %ld\r\n",WIZCHIP_NET_CH7,ret));
-            //      return;
+            //      break;
             //   }
             //   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
             //}
@@ -2694,7 +3136,7 @@ static void taskForUdpServer7(void)
          if((ret=socket(WIZCHIP_NET_CH7,Sn_MR_UDP,m_uPort[WIZCHIP_NET_CH7],0x00)) != WIZCHIP_NET_CH7)
 		 {
 			DBG(TRACE("%d:Opened, port [%d] Field\r\n",WIZCHIP_NET_CH7, m_uPort[WIZCHIP_NET_CH7]));
-            return;
+            break;
 		 }
          //DBG(TRACE("%d:Opened, port [%d]\r\n",WIZCHIP_NET_CH7, m_uPort[WIZCHIP_NET_CH7]));
          break;
@@ -2702,20 +3144,35 @@ static void taskForUdpServer7(void)
 		  //DBG(TRACE("sn_sr:%d\r\n",sn_sr));
          break;
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+	}
+#endif
 }
 
 /**
  * @brief TCP Server
  */
+#ifndef USE_RT_THREAD
 static void taskForTcpClient7(void)
+#else
+static void taskForTcpClient7(void* arg)
+#endif
 {
 	UINT16 anyport=20000;
 	UINT8 *buf = m_aDataBuffer[WIZCHIP_NET_CH7];
 	UINT16 size = 0;
 	//UINT16 sentsize=0;
 	INT32 ret;
-	UINT8 sn_sr = getSn_SR(WIZCHIP_NET_CH7);
+	UINT8 sn_sr = 0; //getSn_SR(WIZCHIP_NET_CH7);
 	
+#ifdef USE_RT_THREAD
+	while (1)
+	{
+		if (rt_mutex_take(&mutex_service, WIZCHIP_NET_RT_WAITING_TIME) != RT_EOK)
+			continue;
+#endif
+	sn_sr = getSn_SR(WIZCHIP_NET_CH7);
 	if (m_szServer[WIZCHIP_NET_CH7] != NULL);
 	{
 	   switch(sn_sr)
@@ -2732,7 +3189,7 @@ static void taskForTcpClient7(void)
 					size = SOCKET_DATA_BUF_SIZE;
 				ret = recv(WIZCHIP_NET_CH7,buf,size);
 				if(ret <= 0)
-					return;
+					break;
 				m_uRecvSize[WIZCHIP_NET_CH7] = ret;
 				if (m_hrxobser[WIZCHIP_NET_CH7] != NULL)
 					m_hrxobser[WIZCHIP_NET_CH7](1);
@@ -2744,7 +3201,7 @@ static void taskForTcpClient7(void)
 				//   if(ret < 0)
 				//   {
 				//      close(WIZCHIP_NET_CH7);
-				//      return;
+				//      break;
 				//   }
 				//   sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
 				//}
@@ -2755,16 +3212,16 @@ static void taskForTcpClient7(void)
 			 if((ret=disconnect(WIZCHIP_NET_CH7)) != SOCK_OK)
 			 {
 				DBG(TRACE("%d:CloseWait Field\r\n",WIZCHIP_NET_CH7));
-				 return;
+				 break;
 			 }
-			 //DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH7));
+			 DBG(TRACE("%d:Closed\r\n",WIZCHIP_NET_CH7));
 			 break;
 		  case SOCK_INIT :
 			 //DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d]\r\n",WIZCHIP_NET_CH7, m_szServer[WIZCHIP_NET_CH7][0], m_szServer[WIZCHIP_NET_CH7][1], m_szServer[WIZCHIP_NET_CH7][2], m_szServer[WIZCHIP_NET_CH7][3], m_uPort[WIZCHIP_NET_CH7]));
 			 if( (ret = connect(WIZCHIP_NET_CH7, m_szServer[WIZCHIP_NET_CH7], m_uPort[WIZCHIP_NET_CH7])) != SOCK_OK)
 			 {
 				 DBG(TRACE("%d:connet[%d.%d.%d.%d], port [%d] Field\r\n",WIZCHIP_NET_CH7, m_szServer[WIZCHIP_NET_CH7][0], m_szServer[WIZCHIP_NET_CH7][1], m_szServer[WIZCHIP_NET_CH7][2], m_szServer[WIZCHIP_NET_CH7][3],  m_uPort[WIZCHIP_NET_CH7]));
-				 return;
+				 break;
 			 }
 			 break;
 		  case SOCK_CLOSED:
@@ -2772,7 +3229,7 @@ static void taskForTcpClient7(void)
 			 if((ret=socket(WIZCHIP_NET_CH7,Sn_MR_TCP,anyport++,Sn_MR_ND)) != WIZCHIP_NET_CH7)
 			 {
 				DBG(TRACE("%d:LBTStart Field\r\n",WIZCHIP_NET_CH7));
-				return;
+				break;
 			 }
 			 //DBG(TRACE("%d:Opened\r\n",WIZCHIP_NET_CH7));
 			 break;
@@ -2781,14 +3238,23 @@ static void taskForTcpClient7(void)
 			 break;
 	   }
    }
+#ifdef USE_RT_THREAD
+		rt_mutex_release(&mutex_service);
+	}
+#endif
 }
 
 /**
  * @brief UDP Server
  */
-static void taskForUdpClient7(void)
-{
-}
+//#ifndef USE_RT_THREAD
+//static void taskForUdpClient7(void)
+//#else
+//static void taskForUdpClient7(void* arg)
+//#endif
+//{
+//}
+#endif //WIZCHIP_NET_CH7
 
 #endif //_WIZCHIP_ > 5100
 
@@ -2803,7 +3269,11 @@ int wizchip_net_Init(HALSpiTypeDef *hspi, wiz_NetInfo *netinfo, BOOL bSetNet)
 {
 	UINT8 tmpstr[16];
 	uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};	
-		
+
+#ifdef USE_RT_THREAD
+	rt_mutex_init(&mutex_service, "mutex_service", RT_IPC_FLAG_FIFO);
+#endif
+	
 	//New(0);
 	HalGpioInit(WIZCHIP_CS_GPIO_TYPE, WIZCHIP_CS_GPIO_PIN, HAL_GPIOMode_Out_PP);
 	HalGpioInit(WIZCHIP_RST_GPIO_TYPE, WIZCHIP_RST_GPIO_PIN, HAL_GPIOMode_Out_PP);
@@ -2881,69 +3351,34 @@ void wizchip_net_DeInit(void)
 	}
 }
 
-static OsalTaskCback_t taskForTcpServer[WIZCHIP_NET_SIZE] = 
-{
-	taskForTcpServer0,
-	taskForTcpServer1,
-	taskForTcpServer2,
-#if _WIZCHIP_ <= 5100
-	taskForTcpServer3
-#else
-	taskForTcpServer3,
-	taskForTcpServer4,
-	taskForTcpServer5,
-	taskForTcpServer6,
-	taskForTcpServer7
-#endif
-};
+#define TASK_NET_TIME 1
 
-static OsalTaskCback_t taskForUdpServer[WIZCHIP_NET_SIZE] = 
-{
-	taskForUdpServer0,
-	taskForUdpServer1,
-	taskForUdpServer2,
-#if _WIZCHIP_ <= 5100
-	taskForUdpServer3
-#else
-	taskForUdpServer3,
-	taskForUdpServer4,
-	taskForUdpServer5,
-	taskForUdpServer6,
-	taskForUdpServer7
-#endif
-};
+#ifndef USE_RT_THREAD
+#define START_NET_SERVER(sn, mode, sThreadName, Services) \
+do{\
+	osal_task_create(Services, TASK_NET_TIME);\
+	DBG(TRACE("start %d service %d\r\n", (sn), (mode)));\
+}while(0)
 
-static OsalTaskCback_t taskForTcpClient[WIZCHIP_NET_SIZE] = 
-{
-	taskForTcpClient0,
-	taskForTcpClient1,
-	taskForTcpClient2,
-#if _WIZCHIP_ <= 5100
-	taskForTcpClient3
-#else
-	taskForTcpClient3,
-	taskForTcpClient4,
-	taskForTcpClient5,
-	taskForTcpClient6,
-	taskForTcpClient7
-#endif
-};
+#define STOP_NET_SERVER(sn, Services) osal_task_kill(Services)
 
-static OsalTaskCback_t taskForUdpClient[WIZCHIP_NET_SIZE] = 
-{
-	taskForUdpClient0,
-	taskForUdpClient1,
-	taskForUdpClient2,
-#if _WIZCHIP_ <= 5100
-	taskForUdpClient3
-#else
-	taskForUdpClient3,
-	taskForUdpClient4,
-	taskForUdpClient5,
-	taskForUdpClient6,
-	taskForUdpClient7
-#endif
-};
+#else //USE_RT_THREAD
+#define START_NET_SERVER(sn, mode, sThreadName, Services) \
+do{\
+		if(rt_thread_init(&wizchip_rt_handle[sn], sThreadName, Services, RT_NULL,(unsigned char *)&WIZCHIP_CHECK_TASK_STK[sn][0], WIZCHIP_WIZCHIP_CHECK_TASK_STK_SIZE, WIZCHIP_CHECK_TASK_PRIO, WIZCHIP_CHECK_TASK_TICK) == RT_EOK)\
+		{\
+			rt_thread_startup(&wizchip_rt_handle[sn]);\
+			DBG(TRACE("start %d service %d\r\n", (sn), (mode)));\
+		}\
+		else\
+		{\
+			DBG(TRACE("start %d service %d error\r\n", (sn), (mode)));\
+		}\
+}while(0)
+	
+#define STOP_NET_SERVER(sn, Services) rt_thread_detach(&wizchip_rt_handle[sn])
+
+#endif //USE_RT_THREAD
 
 /**
  * @brief W5500 启动服务
@@ -2955,45 +3390,218 @@ static OsalTaskCback_t taskForUdpClient[WIZCHIP_NET_SIZE] =
  */
 int vizchip_net_start(UINT8 sn, UINT8 mode, UCHAR* server, UINT16 port)
 {
+	char sThreadName[64] = {0};
 	if ((NULL == m_hspi) || (sn >= WIZCHIP_NET_SIZE))
 		return -1;
 	
 	m_uPort[sn] = (port > 0) ? port : 502;
+	sprintf (sThreadName, "vizchip_net_%d", sn);
 	
 	DBG(TRACE("start channel %d with port %d\r\n", sn, m_uPort[sn]));
-#define TASK_NET_TIME 1
 	
 	switch (mode)
 	{
 	case SOCK_TCP_SERVER:
 		m_uMode[sn] = mode;
 		m_szServer[sn] = NULL;
-		osal_task_create(taskForTcpServer[sn], TASK_NET_TIME);
-		DBG(TRACE("start %d tcp service\r\n", sn));
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpServer7);
+		break;
+#endif
+	default:
+		break;
+		};
 		break;
 	case SOCK_UDP_SERVER:
 		m_uMode[sn] = mode;
 		m_szServer[sn] = NULL;
-		osal_task_create(taskForUdpServer[sn], TASK_NET_TIME);
-		DBG(TRACE("start %d udp service\r\n", sn));
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer7);
+		break;
+#endif
+	default:
+		break;
+		};
 		break;
 	case SOCK_TCP_CLIENT:
 		m_uMode[sn] = mode;
 		m_szServer[sn] = server;
-		osal_task_create(taskForTcpClient[sn], TASK_NET_TIME);
-		DBG(TRACE("start %d tcp client\r\n", sn));
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		START_NET_SERVER(sn, mode, sThreadName, taskForTcpClient7);
+		break;
+#endif
+	default:
+		break;
+		};
 		break;
 	case SOCK_UDP_CLIENT:
 		m_uMode[sn] = mode;
 		m_szServer[sn] = server;
-		//osal_task_create(taskForUdpClient[sn], TASK_NET_TIME);
-		osal_task_create(taskForUdpServer[sn], TASK_NET_TIME);
-		DBG(TRACE("start %d udp client\r\n", sn));
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		START_NET_SERVER(sn, mode, sThreadName, taskForUdpServer7);
+		break;
+#endif
+	default:
+		break;
+		};
 		break;
 	default:
 		DBG(TRACE("unkown net service mode: %d\r\n", mode));
 		return -1;
 	}
+	
 	return 0;
 }
 
@@ -3007,20 +3615,198 @@ int vizchip_net_stop(UINT8 sn)
 	switch (m_uMode[sn])
 	{
 	case SOCK_TCP_SERVER:
-		osal_task_kill(taskForTcpServer[sn]);
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		STOP_NET_SERVER(sn, taskForTcpServer0);
 		break;
-	case SOCK_UDP_SERVER:
-		osal_task_kill(taskForUdpServer[sn]);
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		STOP_NET_SERVER(sn, taskForTcpServer1);
 		break;
-	case SOCK_TCP_CLIENT:
-		osal_task_kill(taskForTcpClient[sn]);
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		STOP_NET_SERVER(sn, taskForTcpServer2);
 		break;
-	case SOCK_UDP_CLIENT:
-		osal_task_kill(taskForUdpClient[sn]);
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		STOP_NET_SERVER(sn, taskForTcpServer3);
 		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		STOP_NET_SERVER(sn, taskForTcpServer4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		STOP_NET_SERVER(sn, taskForTcpServer5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		STOP_NET_SERVER(sn, taskForTcpServer6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		STOP_NET_SERVER(sn, taskForTcpServer7);
+		break;
+#endif
 	default:
 		break;
+		};
+		break;
+	case SOCK_UDP_SERVER:
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		STOP_NET_SERVER(sn, taskForUdpServer0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		STOP_NET_SERVER(sn, taskForUdpServer1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		STOP_NET_SERVER(sn, taskForUdpServer2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		STOP_NET_SERVER(sn, taskForUdpServer3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		STOP_NET_SERVER(sn, taskForUdpServer4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		STOP_NET_SERVER(sn, taskForUdpServer5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		STOP_NET_SERVER(sn, taskForUdpServer6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		STOP_NET_SERVER(sn, taskForUdpServer7);
+		break;
+#endif
+	default:
+		break;
+		};
+		break;
+	case SOCK_TCP_CLIENT:
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		STOP_NET_SERVER(sn, taskForTcpClient0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		STOP_NET_SERVER(sn, taskForTcpClient1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		STOP_NET_SERVER(sn, taskForTcpClient2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		STOP_NET_SERVER(sn, taskForTcpClient3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		STOP_NET_SERVER(sn, taskForTcpClient4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		STOP_NET_SERVER(sn, taskForTcpClient5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		STOP_NET_SERVER(sn, taskForTcpClient6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		STOP_NET_SERVER(sn, taskForTcpClient7);
+		break;
+#endif
+	default:
+		break;
+		};
+		break;
+	case SOCK_UDP_CLIENT:
+		switch (sn)
+		{
+#ifdef WIZCHIP_NET_CH0
+		case WIZCHIP_NET_CH0:
+		STOP_NET_SERVER(sn, taskForUdpServer0);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH1
+		case WIZCHIP_NET_CH1:
+		STOP_NET_SERVER(sn, taskForUdpServer1);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH2
+		case WIZCHIP_NET_CH2:
+		STOP_NET_SERVER(sn, taskForUdpServer2);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH3
+		case WIZCHIP_NET_CH3:
+		STOP_NET_SERVER(sn, taskForUdpServer3);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH4
+		case WIZCHIP_NET_CH4:
+		STOP_NET_SERVER(sn, taskForUdpServer4);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH5
+		case WIZCHIP_NET_CH5:
+		STOP_NET_SERVER(sn, taskForUdpServer5);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH6
+		case WIZCHIP_NET_CH6:
+		STOP_NET_SERVER(sn, taskForUdpServer6);
+		break;
+#endif
+#ifdef WIZCHIP_NET_CH7
+		case WIZCHIP_NET_CH7:
+		STOP_NET_SERVER(sn, taskForUdpServer7);
+		break;
+#endif
+	default:
+		break;
+		};
+		break;
+	default:
+		DBG(TRACE("unkown net service mode: %d\r\n", m_uMode[sn]));
+		return -1;
 	}
+
 	return 0;
 }
 

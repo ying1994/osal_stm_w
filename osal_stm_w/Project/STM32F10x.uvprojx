@@ -730,6 +730,11 @@
               <FileType>1</FileType>
               <FilePath>..\comm\src\comm_esp8266.c</FilePath>
             </File>
+            <File>
+              <FileName>comm_wizchip.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\comm\src\comm_wizchip.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

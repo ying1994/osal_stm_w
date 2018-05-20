@@ -29,7 +29,7 @@
 #define PHY_DATA_FLAG2 0xee
 
 /** 使用发送数据缓冲区开关 */
-#define USE_TX_MSG_FIFO 1
+#define USE_TX_MSG_FIFO 0
 
 /** 数据区的最大数据长度 */
 #define MAX_MSG_DATA_SIZE 1024

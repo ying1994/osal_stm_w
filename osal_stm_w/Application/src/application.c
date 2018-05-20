@@ -18,14 +18,19 @@
 
 #if !ENABLE_BOOTLOADER_CODE
 
+#include "application.h"
 #include "osal.h"
 #include "osal_net.h"
 
-#include "application.h"
+#include "w25x16.h"
+#include "hal_pwm.h"
+
 #include "debugunit.h"
 
 #include "esp8266_client.h"
 #include "comm_esp8266.h"
+
+#include "comm_wizchip.h"
 
 #if (defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
 #include "wizchip_net.h"
@@ -157,6 +162,22 @@ static void OnDebugMsgEvent(MsgTypeDef* pMsg)
 }
 #endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM))
 
+#if (defined(CFG_WIZCHIP))
+/**
+ * @brief Wizchip网络消息事件
+ */
+static void OnWizchipMsgEvent(MsgTypeDef* pMsg)
+{
+	pMsg->uSerPort = OSAL_ROUTE_PORT2;
+	if (osal_router_OnCommMsg(pMsg))
+	{
+		//TODO: Add your codes here.
+		OnCommMsgEvent(pMsg);
+	}
+}
+
+#endif
+
 #if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_USE_WIFI) && defined(CFG_ESP8266_CLIENT) && defined(CFG_USE_COMM_ESP8266))	
 /**
  * @brief 调试单元消息处理函数
@@ -244,7 +265,7 @@ void application_init(void)
 	memcpy(netinfo.dns, g_aLocalDns, 4);
 	netinfo.dhcp = NETINFO_STATIC;
 	
-	hspi = HalSpiGetInstance(HALSpiNumer1);
+	hspi = HalSpiGetInstance(HALSpiNumer2);
 	wizchip_net_Init(hspi, &netinfo, TRUE);
 	vizchip_net_start(WIZCHIP_NET_CH0, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
 	//vizchip_net_start(WIZCHIP_NET_CH1, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
@@ -254,6 +275,11 @@ void application_init(void)
 	//vizchip_net_start(WIZCHIP_NET_CH5, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
 	//vizchip_net_start(WIZCHIP_NET_CH6, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
 	//vizchip_net_start(WIZCHIP_NET_CH7, SOCK_TCP_SERVER, g_aServerIp, g_uServerPort);
+	comm_registe(comm_wizchip_getInstance(WIZCHIP_NET_CH0), COMM_CHANNEL2);
+	hComm = comm_getInstance(COMM_CHANNEL2);
+	hComm->init(vizchip_net_getinstance(WIZCHIP_NET_CH0));
+	hComm->add_rx_obser(OnWizchipMsgEvent);
+	osal_router_setCommPort(hComm, OSAL_ROUTE_PORT2);
 #endif //CFG_WIZCHIP
 #endif //CFG_USE_NET
 
