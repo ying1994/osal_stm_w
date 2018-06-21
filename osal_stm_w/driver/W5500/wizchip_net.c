@@ -3351,7 +3351,7 @@ void wizchip_net_DeInit(void)
 	}
 }
 
-#define TASK_NET_TIME 1
+#define TASK_NET_TIME 10
 
 #ifndef USE_RT_THREAD
 #define START_NET_SERVER(sn, mode, sThreadName, Services) \

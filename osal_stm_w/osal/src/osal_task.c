@@ -33,6 +33,8 @@ static OSAL_TASK_TYPE m_hTasks[OSAL_TASK_MAX] = {NULL};
 /* 当前有效任务数 */
 static UINT16 m_u16TaskCount = 0;
 
+extern UINT32 g_u32SysTick;
+
 /**
  * @brief: 创建一个任务，并将该任务添加到任务执行队列中。
  * @param: 任务函数句柄
@@ -104,7 +106,7 @@ static UINT16 m_u16TaskCount = 0;
 /**
  * @brief: 设置任务执行周期
  * @param taskfunc: 任务函数句柄
- * @param utime:  任务执行周期
+ * @param utime:  任务执行周期(单位：tick)
  * @retval: 任务号
  */
  INT16 osal_task_setRunPeriod(OsalTaskCback_t taskfunc, UINT32 utime)
@@ -126,6 +128,12 @@ static UINT16 m_u16TaskCount = 0;
 	 return i;
  }
  
+ static inline UINT32 subtraction(UINT32 a, UINT32 b)
+ {
+	 return (a >= b) ? (a - b) : (a+(0xffffffff - b));
+ }
+ 
+ #include "stdio.h"
 /**
  * @brief: 启动任务，在main函数的消息循环中调用，以保证各任务正常运行
  * @param: void
@@ -133,15 +141,15 @@ static UINT16 m_u16TaskCount = 0;
  */
  void osal_task_run(void)
  {
-	 INT16 i = 0;
+	 UINT16 i = 0;
 		 
 	 for (i = 0; i < m_u16TaskCount; ++i)
 	 {
-		 ++m_hTasks[i].utime;
-		 if (m_hTasks[i].utime >= m_hTasks[i]. uperiod)
+		 //++m_hTasks[i].utime;
+		 if (subtraction(g_u32SysTick, m_hTasks[i].utime) >= m_hTasks[i]. uperiod)
 		 {
 			m_hTasks[i].hTaskHandle();
-			m_hTasks[i].utime = 0;
+			m_hTasks[i].utime = g_u32SysTick;
 		 }
 	 }
  }

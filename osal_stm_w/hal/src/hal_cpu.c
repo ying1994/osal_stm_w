@@ -19,9 +19,19 @@
 #define CPU_ID_LEN 12			/* CPU编号长度 */
 #define CPU_ID_ADDR 0x1ffff7e8	/* CPU编号存放地址 */
 
-static u8  fac_us=0;//us延时倍乘数
-static u16 fac_ms=0;//ms延时倍乘数
 static UINT32 m_uWdgTime = 0;//看门狗时间
+
+UINT32 g_u32SysTick = 0; //系统节拍
+
+/**
+  * @brief  This function handles SysTick Handler.
+  * @param  None
+  * @retval None
+  */
+void SysTick_Handler(void)
+{
+	++g_u32SysTick;
+}
 
 /**
  * @brief: CPU资源初始化
@@ -90,13 +100,9 @@ void HalCpuInit(void)
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);
 	/* Enable LSI CLK, for IWDG */
 	RCC_LSICmd(ENABLE);
-	
-	/* SysTick_CLK = HCLK/8 */
-	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8); 
-	fac_us = SystemCoreClock / 8000000;	//为系统时钟的1/8 
-	fac_ms = SystemCoreClock / 8000;	//为系统时钟的1/8  
+    /* Configure the SysTick */
+    SysTick_Config( SystemCoreClock / 1000000 );//系统节拍 1/1000000S
 }
-
 
 /**
  * @brief: 获取CPU唯一ID
@@ -181,20 +187,19 @@ void HalIwdgFred(void)
  * @retval void
  */
 void usleep(UINT32 nus)
-{		
-	UINT32 temp;	    	 
-	SysTick->LOAD = nus * fac_us; //时间加载	  		 
-	SysTick->VAL = 0x00;        //清空计数器
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk ;          //开始倒数	 
-	do
+{
+	UINT32 uTime = g_u32SysTick + nus;
+	
+	if (m_uWdgTime > 0)
 	{
-		if (m_uWdgTime > 0)
-			HalIwdgFred();//看门狗喂狗
-		temp = SysTick->CTRL;
+		while(g_u32SysTick < uTime)
+			IWDG_ReloadCounter();
 	}
-	while((temp&0x01) && !(temp&(1<<16)));//等待时间到达   
-	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;       //关闭计数器
-	SysTick->VAL = 0X00;       //清空计数器	 
+	else
+	{
+		while(g_u32SysTick < uTime)
+			;
+	}
 }
 
 /**
@@ -208,18 +213,17 @@ void usleep(UINT32 nus)
 */
 void msleep(UINT16 nms)
 {	 		  	  
-	UINT32 temp;		   
-	SysTick->LOAD = (UINT32)nms * fac_ms;//时间加载(SysTick->LOAD为24bit)
-	SysTick->VAL = 0x00;           //清空计数器
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk ;          //开始倒数  
-	do
+	UINT32 uTime = g_u32SysTick + nms*1000;
+	
+	if (m_uWdgTime > 0)
 	{
-		if (m_uWdgTime > 0)
-			HalIwdgFred();//看门狗喂狗
-		temp = SysTick->CTRL;
+		while(g_u32SysTick < uTime)
+			IWDG_ReloadCounter();
 	}
-	while((temp&0x01) && !(temp&(1<<16)));//等待时间到达   
-	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;       //关闭计数器
-	SysTick->VAL = 0X00;       //清空计数器	  	    
+	else
+	{
+		while(g_u32SysTick < uTime)
+			;
+	}
 } 
 

@@ -479,8 +479,8 @@ void bootloader_init(void)
 	osal_updateunit_Init(&m_hUpdateInstance);
 #endif //#if (defined(CFG_OSAL_ROUTER) && defined(CFG_OSAL_COMM) && defined(CFG_OSAL_UPDATEUNIT))
 	
-	//启动App跳转任务，实现App程序自动跳转执行（跳转时间为300ms）
-	osal_task_create(taskForJumpToApp, 0x40000);
+	//启动App跳转任务，实现App程序自动跳转执行（跳转时间为1000ms）
+	osal_task_create(taskForJumpToApp, 0x100000);
 }
 
 

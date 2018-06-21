@@ -18,6 +18,8 @@
 #define _OSAL_TASK_H
 #include "types.h"
 
+#define OSAL_TASK_MAX 50	/** 最大任务数 */
+
 /**
  * @brief: 任务函数原型。为保证程序正常运行，在任务函数中不能有死循环存在。
  * @param: void
@@ -28,7 +30,7 @@ typedef void (*OsalTaskCback_t)(void);
 /**
  * @brief: 创建一个任务，并将该任务添加到任务执行队列中。
  * @param taskfunc: 任务函数句柄
- * @param utime:  任务执行周期
+ * @param utime:  任务执行周期(单位：tick)
  * @retval: 任务号
  */
  INT16 osal_task_create(OsalTaskCback_t taskfunc, UINT32 utime);
@@ -50,7 +52,7 @@ typedef void (*OsalTaskCback_t)(void);
 /**
  * @brief: 设置任务执行周期
  * @param taskfunc: 任务函数句柄
- * @param utime:  任务执行周期
+ * @param utime:  任务执行周期(单位：tick)
  * @retval: 任务号
  */
  INT16 osal_task_setRunPeriod(OsalTaskCback_t taskfunc, UINT32 utime);
