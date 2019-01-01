@@ -677,6 +677,26 @@ INT32 HalSetIndeTimer(UINT32 tID, HalTimerCBack_t hTimerFunc, UINT32 uus)
 }
 
 /**
+ * @brief 更新独立定时器回调函数
+ * @param tID 定时器ID @ref IndeTimerIDsTypeDef
+ * @param hFunc 共享定时器回调函数句柄
+ * @retval 注册成功返回当前定时器编号，失败返回-1
+ */
+INT32 HalUpdIndeTimerHandler(UINT32 tID, HalTimerCBack_t hTimerFunc)
+{
+	INT32 uID = -1;
+	if (tID < INDE_TIMER_MAX)
+	{
+		if (m_hIndeTimer[tID] != hTimerFunc)//定时器已注册
+		{
+			m_hIndeTimer[tID] = hTimerFunc;
+			uID = tID;
+		}
+	}
+	return uID;
+}
+	
+/**
  * @brief 注册一个共享定时器
  * @param hFunc 共享定时器回调函数句柄
  * @param time  定时时间长度（单位：ms）

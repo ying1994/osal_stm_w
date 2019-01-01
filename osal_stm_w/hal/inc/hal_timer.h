@@ -50,6 +50,14 @@ typedef enum
 INT32 HalSetIndeTimer(UINT32 tID, HalTimerCBack_t hTimerFunc, UINT32 uus);
 
 /**
+ * @brief 更新独立定时器回调函数
+ * @param tID 定时器ID @ref IndeTimerIDsTypeDef
+ * @param hFunc 共享定时器回调函数句柄
+ * @retval 注册成功返回当前定时器编号，失败返回-1
+ */
+INT32 HalUpdIndeTimerHandler(UINT32 tID, HalTimerCBack_t hTimerFunc);
+
+/**
  * @brief 注册一个共享定时器
  * @param hTimerFunc 共享定时器回调函数句柄
  * @param ums  定时时间长度（单位：ms）
