@@ -807,9 +807,9 @@ static void New(HalIndeTimerIDsTypeDef eId)
 }
 
 /**
- * @brief 获取I2C操作结构句柄
- * @param eChannel I2C 通道 @ref HALI2CNumer
- * @retval I2C操作结构句柄
+ * @brief 获取PWM操作结构句柄
+ * @param eChannel PWM 通道 @ref HALPWMNumer
+ * @retval PWM操作结构句柄
  */
 HALPwmTypeDef* HalPwmGetInstance(HalIndeTimerIDsTypeDef eId)
 {
