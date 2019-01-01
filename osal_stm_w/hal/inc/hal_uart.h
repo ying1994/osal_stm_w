@@ -61,9 +61,13 @@ typedef enum
 {
 	HAL_UART1 = 0,	/*!< UART1 */
 	HAL_UART2,		/*!< UART2 */
+#if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 	HAL_UART3,		/*!< UART3 */
+#endif /* defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
+#if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 	HAL_UART4,		/*!< UART4 */
 	HAL_UART5,		/*!< UART5 */
+#endif /* defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 	HAL_UART_SIZE	/*!< UART ¶Ë¿Ú×ÜÊý */
 }HALUartNumer;
 

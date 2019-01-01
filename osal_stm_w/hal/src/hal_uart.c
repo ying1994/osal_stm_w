@@ -268,6 +268,7 @@ static void uart2_deInit(void)
 	m_hUartObser[1] = NULL;
 }
 
+#if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 static void uart3_set_baudrate(UINT32 baudrate)
 {
 	USART_InitStructure[2].USART_BaudRate = baudrate;//一般设置为115200;
@@ -389,7 +390,9 @@ static void uart3_deInit(void)
 	
 	m_hUartObser[2] = NULL;
 }
+#endif /* defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 
+#if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 static void uart4_set_baudrate(UINT32 baudrate)
 {
 	USART_InitStructure[3].USART_BaudRate = baudrate;//一般设置为115200;
@@ -634,6 +637,7 @@ static void uart5_deInit(void)
 	
 	m_hUartObser[4] = NULL;
 }
+#endif /* defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 
 //串口1中断服务程序
 void USART1_IRQHandler(void)
@@ -659,6 +663,7 @@ void USART2_IRQHandler(void)
 	} 
 }
 
+#if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 //串口1中断服务程序
 void USART3_IRQHandler(void)
 {
@@ -670,7 +675,9 @@ void USART3_IRQHandler(void)
 			m_hUartObser[2](Res);
 	} 
 }
+#endif /* defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 
+#if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 //串口1中断服务程序
 void UART4_IRQHandler(void)
 {
@@ -694,6 +701,7 @@ void UART5_IRQHandler(void)
 			m_hUartObser[4](Res);
 	} 
 }
+#endif /* defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 
 
 /**
@@ -731,6 +739,7 @@ static void New(HALUartNumer numer)
 		pthis[HAL_UART2] = &m_hUartInstance[HAL_UART2];
 		pthis[HAL_UART2]->init();
 		break;
+#if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 	case HAL_UART3:
 		m_hUartInstance[HAL_UART3].add_rx_obser = uart3_add_rx_obser;
 		m_hUartInstance[HAL_UART3].init = uart3_init;
@@ -744,6 +753,9 @@ static void New(HALUartNumer numer)
 		pthis[HAL_UART3] = &m_hUartInstance[HAL_UART3];
 		pthis[HAL_UART3]->init();
 		break;
+#endif /* defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
+
+#if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
 	case HAL_UART4:
 		m_hUartInstance[HAL_UART4].add_rx_obser = uart4_add_rx_obser;
 		m_hUartInstance[HAL_UART4].init = uart4_init;
@@ -770,6 +782,7 @@ static void New(HALUartNumer numer)
 		pthis[HAL_UART5] = &m_hUartInstance[HAL_UART5];
 		pthis[HAL_UART5]->init();
 		break;
+#endif /* defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 	default:
 		break;
 	}
