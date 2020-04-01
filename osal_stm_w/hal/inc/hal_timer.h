@@ -29,7 +29,9 @@ typedef enum
 	INDE_TIMER_TIM4,
 	INDE_TIMER_TIM5,
 	INDE_TIMER_TIM6,
+#ifdef STM32F10X_HD
 	INDE_TIMER_TIM8,
+#endif
 	INDE_TIMER_MAX  /** 独立定时器最大个数 */
 }HalIndeTimerIDsTypeDef;
 

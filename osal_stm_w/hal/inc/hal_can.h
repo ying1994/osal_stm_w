@@ -86,7 +86,7 @@ typedef struct _CanTypeDef
 	 * @param hRxFunc: CAN接收回调函数句柄
 	 * @retval None
 	 */
-	void (*init)(UINT8 eMode, UINT uBaudrate, CAN_RX_BASE_FUNC hRxFunc);
+	void (*init)(UINT8 eMode, UINT32 uBaudrate, CAN_RX_BASE_FUNC hRxFunc);
 	
 	/**
 	 * @brief CAN资源注销

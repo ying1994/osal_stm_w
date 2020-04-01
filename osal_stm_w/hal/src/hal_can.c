@@ -53,7 +53,7 @@ static BOOL bRecvEn2 = FALSE;
 static void enableReceive1(BOOL bIsOn);
 
 /* CAN1 ≥ı ºªØ */
-static void init1(UINT8 eMode, UINT uBaudrate, CAN_RX_BASE_FUNC hRxFunc)
+static void init1(UINT8 eMode, UINT32 uBaudrate, CAN_RX_BASE_FUNC hRxFunc)
 {
 	GPIO_InitTypeDef GPIO_InitStructure; 
 

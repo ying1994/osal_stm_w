@@ -47,9 +47,11 @@ static TIM_TypeDef* GetTimHandle(HalIndeTimerIDsTypeDef id)
 	case INDE_TIMER_TIM6:
 		TIMx = TIM6;
 		break;
+#ifdef STM32F10X_HD
 	case INDE_TIMER_TIM8:
 		TIMx = TIM8;
 		break;
+#endif
 	default:
 		break;
 	}

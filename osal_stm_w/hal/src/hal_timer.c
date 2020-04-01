@@ -455,6 +455,7 @@ static void timer7_init(BOOL bIsOn, UINT32 ums)
 //	TIM_SetCounter(TIM7, 0);
 //}
 
+#ifdef STM32F10X_HD
 /* 定时器8初始化 */
 static void timer8_init(BOOL bIsOn, UINT32 uus)
 {
@@ -514,6 +515,7 @@ static void timer8_clear(void)
 {
 	TIM_SetCounter(TIM8, 0);
 }
+#endif // STM32F10X_HD
 
 /* 定时器1中断服务程序 */
 void TIM1_UP_IRQHandler(void)
@@ -610,6 +612,7 @@ void TIM7_IRQHandler(void)
 	}
 }
 
+#ifdef STM32F10X_HD
 /* 定时器1中断服务程序 */
 void TIM8_UP_IRQHandler(void)
 {
@@ -621,6 +624,7 @@ void TIM8_UP_IRQHandler(void)
 			m_hIndeTimer[INDE_TIMER_TIM8]();
 	}
 }
+#endif
 
 static void InitIndtTimers(void)
 {
@@ -630,7 +634,9 @@ static void InitIndtTimers(void)
 	m_hTimerInitFunc[INDE_TIMER_TIM4] = timer4_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM5] = timer5_init;
 	m_hTimerInitFunc[INDE_TIMER_TIM6] = timer6_init;
+#ifdef STM32F10X_HD
 	m_hTimerInitFunc[INDE_TIMER_TIM8] = timer8_init;
+#endif
 	
 	m_hClearTimer[INDE_TIMER_TIM1] = timer1_clear;
 	m_hClearTimer[INDE_TIMER_TIM2] = timer2_clear;
@@ -638,7 +644,9 @@ static void InitIndtTimers(void)
 	m_hClearTimer[INDE_TIMER_TIM4] = timer4_clear;
 	m_hClearTimer[INDE_TIMER_TIM5] = timer5_clear;
 	m_hClearTimer[INDE_TIMER_TIM6] = timer6_clear;
+#ifdef STM32F10X_HD
 	m_hClearTimer[INDE_TIMER_TIM8] = timer8_clear;
+#endif
 }
 
 /**
