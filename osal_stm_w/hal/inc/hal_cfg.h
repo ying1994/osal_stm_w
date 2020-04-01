@@ -35,6 +35,7 @@
 #define CFG_HAL_RTC
 #define CFG_HAL_CAN
 #define CFG_HAL_PWM
+#define CFG_HAL_ENC
 
 #define CFG_HAL_IAP
 

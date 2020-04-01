@@ -18,7 +18,7 @@
 #include "comm.h"
 
 
-#if (defined(CFG_OSAL_COMM) && defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
+#if (defined(CFG_OSAL_COMM) && defined(CFG_USE_NET) && defined(CFG_WIZCHIP) && defined(CFG_OSAL_COMM_WIZCHIP))
 /**
  * @brief 获取Comm操作结构句柄
  * @param sn: COMM通道枚举 @ref EnWizchipNetChannel

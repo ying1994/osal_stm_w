@@ -54,12 +54,16 @@
 
 /* wifi configure */
 #ifdef CFG_USE_NET
-#define CFG_USE_WIFI
+//#define CFG_USE_WIFI
 #endif //CFG_USE_NET
 
 /* WIZCHIP driver configure, for W5100, W5500 .etc */
 #ifdef CFG_USE_NET
 #define CFG_WIZCHIP
+#endif //CFG_USE_NET
+
+#ifdef CFG_WIZCHIP
+#define CFG_OSAL_COMM_WIZCHIP
 #endif //CFG_USE_NET
 
 /* ESP8266 driver configure */
@@ -76,6 +80,7 @@
 //#define CFG_HT1621B
 /* SHT2x driver configure, for HST20, HST21 .etc */
 //#define CFG_SHT2X
+//#define CFG_W25X16
 
 
 /* hal driver resource */

@@ -18,7 +18,7 @@
 #include "comm_wizchip.h"
 #include "wizchip_net.h"
 
-#if (defined(CFG_OSAL_COMM) && defined(CFG_USE_NET) && defined(CFG_WIZCHIP))
+#if (defined(CFG_OSAL_COMM) && defined(CFG_USE_NET) && defined(CFG_WIZCHIP) && defined(CFG_OSAL_COMM_WIZCHIP))
 
 
 #ifdef USE_RT_THREAD

@@ -13,3 +13,5 @@
 #include "hal_crc.h"
 #include "hal_rtc.h"
 #include "hal_adc.h"
+#include "hal_pwm.h"
+#include "hal_enc.h"

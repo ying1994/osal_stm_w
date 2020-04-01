@@ -18,9 +18,9 @@
 
 #define CFG_OSAL_COMM
 #define CFG_OSAL_COMM2
-#define CFG_OSAL_COMM3
-#define CFG_OSAL_COMM4
-#define CFG_OSAL_COMM5
+//#define CFG_OSAL_COMM3
+//#define CFG_OSAL_COMM4
+//#define CFG_OSAL_COMM5
 #define CFG_OSAL_ROUTER
 #define CFG_OSAL_UPDATEUNIT
 
