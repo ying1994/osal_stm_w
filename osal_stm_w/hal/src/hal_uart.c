@@ -25,6 +25,15 @@ static HalUartCBack_t m_hUartObser[5] = {NULL};
 static HALUartTypeDef m_hUartInstance[5];
 static HALUartTypeDef* pthis[5] = {NULL};
 
+static void uart1_set_halfduplex(BOOL newstate)
+{
+	USART_LINCmd(USART1, DISABLE);
+	USART_SmartCardCmd(USART1, DISABLE);
+	USART_SmartCardNACKCmd(USART1, DISABLE);
+	USART_IrDACmd(USART1, DISABLE);
+	USART_HalfDuplexCmd(USART1, newstate?ENABLE:DISABLE);
+}
+
 static void uart1_set_baudrate(UINT32 baudrate)
 {
 	USART_InitStructure[0].USART_BaudRate = baudrate;//一般设置为115200;
@@ -144,6 +153,15 @@ static void uart1_deInit(void)
     USART_Cmd(USART1, DISABLE);                    //使能串口 
 	
 	m_hUartObser[0] = NULL;
+}
+
+static void uart2_set_halfduplex(BOOL newstate)
+{
+	USART_LINCmd(USART2, DISABLE);
+	USART_SmartCardCmd(USART2, DISABLE);
+	USART_SmartCardNACKCmd(USART2, DISABLE);
+	USART_IrDACmd(USART2, DISABLE);
+	USART_HalfDuplexCmd(USART2, newstate?ENABLE:DISABLE);
 }
 
 static void uart2_set_baudrate(UINT32 baudrate)
@@ -269,6 +287,16 @@ static void uart2_deInit(void)
 }
 
 #if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
+
+static void uart3_set_halfduplex(BOOL newstate)
+{
+	USART_LINCmd(USART3, DISABLE);
+	USART_SmartCardCmd(USART3, DISABLE);
+	USART_SmartCardNACKCmd(USART3, DISABLE);
+	USART_IrDACmd(USART3, DISABLE);
+	USART_HalfDuplexCmd(USART3, newstate?ENABLE:DISABLE);
+}
+
 static void uart3_set_baudrate(UINT32 baudrate)
 {
 	USART_InitStructure[2].USART_BaudRate = baudrate;//一般设置为115200;
@@ -393,6 +421,15 @@ static void uart3_deInit(void)
 #endif /* defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)||  defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL) */ 
 
 #if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
+static void uart4_set_halfduplex(BOOL newstate)
+{
+	USART_LINCmd(UART4, DISABLE);
+	USART_SmartCardCmd(UART4, DISABLE);
+	USART_SmartCardNACKCmd(UART4, DISABLE);
+	USART_IrDACmd(UART4, DISABLE);
+	USART_HalfDuplexCmd(UART4, newstate?ENABLE:DISABLE);
+}
+
 static void uart4_set_baudrate(UINT32 baudrate)
 {
 	USART_InitStructure[3].USART_BaudRate = baudrate;//一般设置为115200;
@@ -513,6 +550,15 @@ static void uart4_deInit(void)
     USART_Cmd(UART4, DISABLE);                    //使能串口 
 	
 	m_hUartObser[3] = NULL;
+}
+
+static void uart5_set_halfduplex(BOOL newstate)
+{
+	USART_LINCmd(UART5, DISABLE);
+	USART_SmartCardCmd(UART5, DISABLE);
+	USART_SmartCardNACKCmd(UART5, DISABLE);
+	USART_IrDACmd(UART5, DISABLE);
+	USART_HalfDuplexCmd(UART5, newstate?ENABLE:DISABLE);
 }
 
 static void uart5_set_baudrate(UINT32 baudrate)
@@ -717,6 +763,7 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART1].add_rx_obser = uart1_add_rx_obser;
 		m_hUartInstance[HAL_UART1].init = uart1_init;
 		m_hUartInstance[HAL_UART1].deInit = uart1_deInit;
+		m_hUartInstance[HAL_UART1].set_halfduplex = uart1_set_halfduplex;
 		m_hUartInstance[HAL_UART1].set_baudrate = uart1_set_baudrate;
 		m_hUartInstance[HAL_UART1].set_databits = uart1_set_databits;
 		m_hUartInstance[HAL_UART1].set_stopbit = uart1_set_stopbit;
@@ -730,6 +777,7 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART2].add_rx_obser = uart2_add_rx_obser;
 		m_hUartInstance[HAL_UART2].init = uart2_init;
 		m_hUartInstance[HAL_UART2].deInit = uart2_deInit;
+		m_hUartInstance[HAL_UART2].set_halfduplex = uart2_set_halfduplex;
 		m_hUartInstance[HAL_UART2].set_baudrate = uart2_set_baudrate;
 		m_hUartInstance[HAL_UART2].set_databits = uart2_set_databits;
 		m_hUartInstance[HAL_UART2].set_stopbit = uart2_set_stopbit;
@@ -744,6 +792,7 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART3].add_rx_obser = uart3_add_rx_obser;
 		m_hUartInstance[HAL_UART3].init = uart3_init;
 		m_hUartInstance[HAL_UART3].deInit = uart3_deInit;
+		m_hUartInstance[HAL_UART3].set_halfduplex = uart3_set_halfduplex;
 		m_hUartInstance[HAL_UART3].set_baudrate = uart3_set_baudrate;
 		m_hUartInstance[HAL_UART3].set_databits = uart3_set_databits;
 		m_hUartInstance[HAL_UART3].set_stopbit = uart3_set_stopbit;
@@ -760,6 +809,7 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART4].add_rx_obser = uart4_add_rx_obser;
 		m_hUartInstance[HAL_UART4].init = uart4_init;
 		m_hUartInstance[HAL_UART4].deInit = uart4_deInit;
+		m_hUartInstance[HAL_UART4].set_halfduplex = uart4_set_halfduplex;
 		m_hUartInstance[HAL_UART4].set_baudrate = uart4_set_baudrate;
 		m_hUartInstance[HAL_UART4].set_databits = uart4_set_databits;
 		m_hUartInstance[HAL_UART4].set_stopbit = uart4_set_stopbit;
@@ -773,6 +823,7 @@ static void New(HALUartNumer numer)
 		m_hUartInstance[HAL_UART5].add_rx_obser = uart5_add_rx_obser;
 		m_hUartInstance[HAL_UART5].init = uart5_init;
 		m_hUartInstance[HAL_UART5].deInit = uart5_deInit;
+		m_hUartInstance[HAL_UART5].set_halfduplex = uart5_set_halfduplex;
 		m_hUartInstance[HAL_UART5].set_baudrate = uart5_set_baudrate;
 		m_hUartInstance[HAL_UART5].set_databits = uart5_set_databits;
 		m_hUartInstance[HAL_UART5].set_stopbit = uart5_set_stopbit;

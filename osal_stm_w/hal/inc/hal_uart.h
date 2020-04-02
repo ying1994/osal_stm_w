@@ -106,6 +106,13 @@ typedef struct _HALUartTypeDef
 	void (*add_rx_obser)(HalUartCBack_t hrxobser);
 	
 	/**
+	 * @brief: 设置串口通讯单线半双工模式, 在单线半双工模式下，TX和RX引脚在芯片内部互连, RX不再被使用
+	 * @param newstate: 1-单线半双工模式, 0-双线全双工模式
+	 * @retval: void
+	 */
+	void (*set_halfduplex)(BOOL newstate);
+	
+	/**
 	 * @brief: 设置串口通讯波特率
 	 * @param baudrate: 串口通讯波特率
 	 * @retval: void

@@ -648,6 +648,7 @@ static void timer5_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 	timer_pwm_SetDutyCycle(INDE_TIMER_TIM5, eCh, dutycycle);
 }
 
+#ifdef STM32F10X_HD
 /* 定时器8 PWM 模式 初始化 */
 static void timer8_pwm_init(UINT32 uus, UINT16 uPolarity, UINT16 uMask)
 {
@@ -754,7 +755,7 @@ static void timer8_pwm_SetDutyCycle(UINT8 eCh, UINT8 dutycycle)
 	
 	timer_pwm_SetDutyCycle(INDE_TIMER_TIM8, eCh, dutycycle);
 }
-
+#endif
 
 /**
  * @brief 申请PWM操作对象
@@ -797,12 +798,14 @@ static void New(HalIndeTimerIDsTypeDef eId)
 		break;
 	case INDE_TIMER_TIM6:
 		break;
+#ifdef STM32F10X_HD
 	case INDE_TIMER_TIM8:
 		m_Instance[INDE_TIMER_TIM8].init = timer8_pwm_init;
 		m_Instance[INDE_TIMER_TIM8].deInit = timer8_pwm_deInit;
 		m_Instance[INDE_TIMER_TIM8].setDutyCycle = timer8_pwm_SetDutyCycle;
 		m_pthis[INDE_TIMER_TIM8] = &m_Instance[INDE_TIMER_TIM8];
 		break;
+#endif
 	default:
 		break;
 	}
